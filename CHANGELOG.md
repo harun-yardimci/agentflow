@@ -5,6 +5,19 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] — 2026-05-19
+
+### Fixed
+
+- Server no longer prints a multi-line stack trace ("Unhandled error:
+  NotFoundError: Not Found") when something — usually a browser tab cached
+  from a previous run, macOS Spotlight, or a link-preview tool — requests
+  a path that hits the SPA fallback with a missing file. The error handler
+  now logs a single `[404] METHOD /path` warning and returns the right
+  status code; 5xx errors keep their stacks.
+- SPA fallback registers a `sendFile` callback so an ENOENT inside
+  `send` is routed through the error handler instead of leaking out.
+
 ## [1.0.1] — 2026-05-19
 
 ### Fixed
@@ -87,5 +100,6 @@ First public release.
 - Coverage HTML report is not bundled — use `npm run test:coverage`
   locally.
 
+[1.0.2]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.2
 [1.0.1]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.1
 [1.0.0]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.0

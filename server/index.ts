@@ -232,8 +232,15 @@ console.log('[AgentFlow MCP] Mounted on /mcp/sse');
 // ─── Static file serving (production) ───
 if (isProduction && existsSync(distPath)) {
   app.use(express.static(distPath));
-  app.get('{*path}', (_req, res) => {
-    res.sendFile(join(distPath, 'index.html'));
+  // SPA fallback. Use the sendFile callback so an ENOENT from `send`
+  // (e.g. a stale asset hash requested by a cached browser tab) becomes
+  // a quiet 404 routed through the error handler instead of leaking the
+  // raw stack trace into the server log.
+  const indexHtml = join(distPath, 'index.html');
+  app.get('{*path}', (_req, res, next) => {
+    res.sendFile(indexHtml, (err) => {
+      if (err) next(err);
+    });
   });
   console.log('[AgentFlow] Serving frontend from dist/');
 }
