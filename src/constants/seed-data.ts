@@ -1,0 +1,58 @@
+import type { Pipeline } from '@/types';
+
+export const INIT_PIPELINES: Pipeline[] = [
+  {
+    id: 'p1',
+    name: 'SaaS Landing Page',
+    status: 'running',
+    created: '2025-03-10 09:14',
+    description: '',
+    rules: '',
+    enabledAgents: [],
+    workingDir: '.',
+    stages: [],
+    logs: [
+      { id: 1, time: '09:14:02', type: 'info',    msg: 'Pipeline initialized' },
+      { id: 2, time: '09:14:03', type: 'model',   msg: 'Gemini \u2192 Research Agent' },
+      { id: 3, time: '09:14:17', type: 'success', msg: 'Market Research completed \u2014 3,200 tokens' },
+      { id: 4, time: '09:14:17', type: 'model',   msg: 'Claude \u2192 Product Owner' },
+      { id: 5, time: '09:14:39', type: 'warning', msg: 'Product Brief awaiting manual approval' },
+    ],
+    tasks: [
+      { id: 't1', name: 'Market Research',  agentId: 'research',  model: 'gemini', approval: 'auto',   status: 'completed',             stage: 0, dependsOn: [],         input: 'Build a SaaS landing page for a fraud detection tool targeting fintech companies.', output: '3 competitors identified. Target: fintech CTOs. Recommended tone: technical-confident.', tokens: 3200, duration: '14s', priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't2', name: 'Product Brief',    agentId: 'product',   model: 'claude', approval: 'manual', status: 'awaiting_approval',  stage: 1, dependsOn: ['t1'],     input: 'Research output + idea brief', output: 'PRD: Hero, Features, Pricing, CTA. Tone: dark, technical.', tokens: 5100, duration: '22s', priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't3', name: 'Copywriting',      agentId: 'content',   model: 'gemini', approval: 'auto',   status: 'queued',             stage: 2, dependsOn: ['t2'],     input: 'PRD output', output: null, tokens: null, duration: null, priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't4', name: 'UI Design Spec',   agentId: 'designer',  model: 'claude', approval: 'manual', status: 'queued',             stage: 2, dependsOn: ['t2'],     input: 'PRD output', output: null, tokens: null, duration: null, priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't5', name: 'Frontend Code',    agentId: 'developer', model: 'codex',  approval: 'manual', status: 'queued',             stage: 3, dependsOn: ['t3', 't4'], input: 'Design spec + copy', output: null, tokens: null, duration: null, priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't6', name: 'SEO Optimization', agentId: 'seo',       model: 'gemini', approval: 'auto',   status: 'queued',             stage: 4, dependsOn: ['t5'],     input: 'HTML output', output: null, tokens: null, duration: null, priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't7', name: 'Deploy',           agentId: 'deploy',    model: 'codex',  approval: 'manual', status: 'queued',             stage: 4, dependsOn: ['t5'],     input: 'Final build', output: null, tokens: null, duration: null, priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+    ],
+    totalTokensUsed: 0,
+    tokensByModel: {},
+  },
+  {
+    id: 'p2',
+    name: 'Blog Post: AI in Fraud',
+    status: 'completed',
+    created: '2025-03-09 14:30',
+    description: '',
+    rules: '',
+    enabledAgents: [],
+    workingDir: '.',
+    stages: [],
+    logs: [
+      { id: 1, time: '14:30:01', type: 'info',    msg: 'Pipeline initialized' },
+      { id: 2, time: '14:30:02', type: 'success', msg: 'Topic Research completed' },
+      { id: 3, time: '14:31:10', type: 'success', msg: 'Draft Article completed' },
+      { id: 4, time: '14:31:55', type: 'success', msg: 'SEO & Publish completed' },
+      { id: 5, time: '14:31:56', type: 'success', msg: 'Pipeline completed \u2713' },
+    ],
+    tasks: [
+      { id: 't8',  name: 'Topic Research', agentId: 'research', model: 'gemini', approval: 'auto',   status: 'completed', stage: 0, dependsOn: [],     input: 'Blog post on AI fraud detection trends 2025.', output: 'Top trends identified. 5 key sources.', tokens: 2800, duration: '11s', priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't9',  name: 'Draft Article',  agentId: 'content',  model: 'claude', approval: 'manual', status: 'completed', stage: 1, dependsOn: ['t8'], input: 'Research output', output: '1200-word draft completed.', tokens: 7400, duration: '31s', priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+      { id: 't10', name: 'SEO & Publish',  agentId: 'seo',      model: 'gemini', approval: 'auto',   status: 'completed', stage: 2, dependsOn: ['t9'], input: 'Draft article',  output: 'Published to /blog/ai-fraud-2025.', tokens: 1100, duration: '8s', priority: null, timeoutMs: 1800000, tags: [], taskType: 'seeded', sourceTaskId: null, stageId: null, createdAt: null, worktreePath: null, worktreeStatus: null },
+    ],
+    totalTokensUsed: 0,
+    tokensByModel: {},
+  },
+];
