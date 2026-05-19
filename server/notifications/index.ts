@@ -112,12 +112,12 @@ export function formatMessage(event: NotifyEvent, data: EventMap[NotifyEvent & k
 async function dispatch(event: NotifyEvent, data: EventMap[NotifyEvent & keyof EventMap]): Promise<void> {
   const config = loadConfig();
   const { text, emoji } = formatMessage(event, data);
-  const fullText = `${emoji} *AgentFlow*\n${text}`;
+  const payload = { emoji, title: 'AgentFlow', body: text };
 
   // Telegram
   if (config.telegramEnabled && config.telegramBotToken && config.telegramChatId) {
     try {
-      await sendTelegramMessage(config.telegramBotToken, config.telegramChatId, fullText);
+      await sendTelegramMessage(config.telegramBotToken, config.telegramChatId, payload);
     } catch (err) {
       console.error('[Notifications] Telegram send failed:', (err as Error).message);
     }
@@ -130,7 +130,7 @@ async function dispatch(event: NotifyEvent, data: EventMap[NotifyEvent & keyof E
         config.slackWebhookUrl || '',
         config.slackBotToken || '',
         config.slackChannel || '',
-        fullText,
+        payload,
       );
     } catch (err) {
       console.error('[Notifications] Slack send failed:', (err as Error).message);

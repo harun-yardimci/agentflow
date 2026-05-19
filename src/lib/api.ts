@@ -524,7 +524,26 @@ export interface ProviderDef {
   cliCommand: string;
   sortOrder: number;
   enabled: boolean;
+  executionMode: 'cli' | 'api';
+  hasApiKey: boolean;
 }
+
+export interface UpdateProviderInput {
+  label?: string;
+  color?: string;
+  bg?: string;
+  cliCommand?: string;
+  sortOrder?: number;
+  enabled?: boolean;
+  executionMode?: 'cli' | 'api';
+  apiKey?: string | null;
+}
+
+export const updateProviderDef = (id: string, data: UpdateProviderInput) =>
+  request<ProviderDef>(`/models/providers/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 
 export interface ModelDef {
   id: string;

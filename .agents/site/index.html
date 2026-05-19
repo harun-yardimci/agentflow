@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgentFlow — a conductor for your AI coding agents</title>
+<meta name="description" content="Pipeline-based orchestration for AI coding agents — Claude Code, Codex, and Gemini CLI, side-by-side in isolated git worktrees." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="./index.html" class="nav-brand"><span class="nav-brand-dot"></span>AGENTFLOW</a>
+    <div class="nav-links">
+      <a href="./index.html" class="active">Overview</a>
+      <a href="./blog.html">Blog</a>
+      <a href="./linkedin.html">LinkedIn drafts</a>
+      <a href="https://github.com/harun-yardimci/agentflow" class="nav-badge">GITHUB →</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">OPEN SOURCE · v1.0.0 · MAY 2026</span>
+    <h1>A conductor for your <span class="accent">AI coding agents</span>.</h1>
+    <p class="lead">
+      Pipeline-based orchestration for Claude Code, Codex, and Gemini CLI.
+      Every task runs in its own git worktree. Every task picks its own agent.
+      The whole thing speaks MCP — so another agent can drive it.
+    </p>
+    <div class="meta">
+      <span class="meta-item"><a href="https://github.com/harun-yardimci/agentflow">github.com/harun-yardimci/agentflow</a></span>
+      <span class="meta-item">Apache-2.0</span>
+      <span class="meta-item">Self-hosted, local-first</span>
+      <span class="meta-item">npm install · npm run dev</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <span class="eyebrow">THREE IDEAS</span>
+    <h2>Not novel alone. The combination is.</h2>
+    <p class="section-lead">If I had to throw away two and keep one, I'd keep worktree isolation. But the magic is all three.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-num">01 / ISOLATION</div>
+        <h3>Every task runs in its own git worktree.</h3>
+        <p>Ten agents in parallel on the same repo. They can't see each other. No merge pain. Clean per-task diffs. Side-by-side A/B of the same prompt across Claude, Codex, Gemini.</p>
+        <p style="margin-top:12px"><a href="./post.html?p=worktree-deep-dive">Read the deep-dive →</a></p>
+      </div>
+      <div class="card">
+        <div class="card-num">02 / MULTI-AGENT</div>
+        <h3>Every task picks its own agent.</h3>
+        <p>Claude Opus for planning. Sonnet for implementation. Codex for refactors. Gemini for volume. Same pipeline, five minds, one board. You stop thinking about which model — the role knows.</p>
+        <p style="margin-top:12px"><a href="./post.html?p=choosing-the-right-model">See the defaults cheatsheet →</a></p>
+      </div>
+      <div class="card">
+        <div class="card-num">03 / MCP-NATIVE</div>
+        <h3>Another agent can drive AgentFlow.</h3>
+        <p>Built-in MCP server with 17 tools. Claude Desktop, Cursor, or your own agent can list, create, approve, and run pipelines. Meta-agents without Python glue.</p>
+        <p style="margin-top:12px"><a href="./post.html?p=agents-driving-agents">Read the MCP angle →</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background: var(--surface-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="wrap">
+    <span class="eyebrow">REAL RUN · 17 TASKS · 5 AGENTS · $59 IN TOKENS</span>
+    <h2>Not a mockup. This is a pipeline I shipped with this month.</h2>
+    <div class="shot">
+      <img src="./assets/pipeline-board-multi-agent.png" alt="AgentFlow pipeline board with 5 stages and 5 different models" />
+      <div class="shot-caption">Ozan Game Project — Research · Planning · Development · Testing · Review. Five models: Claude Opus 4.7, Sonnet 4.6, Gemini 3.1-Pro, Codex 1, GPT-5.4. Merge conflict at the bottom was auto-resolved by Codex while I was at dinner.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <span class="eyebrow">THREE PIPELINES I ACTUALLY RUN</span>
+    <h2>Concrete recipes. Not toy examples.</h2>
+    <p class="section-lead">Each links to its full breakdown — task graph, agent/model per step, real prompts, gotchas.</p>
+    <a class="card-link" href="./post.html?p=example-pipelines#pipeline-1--overnight-game-feature-hex-empire-lite-html5">
+      <div class="title">1 · Overnight game build — Hex Empire Lite HTML5</div>
+      <div class="subtitle">17 tasks, 5 agents, $59. Architecture on Opus, parallel implementation on Sonnet + Opus, auto-spawned merge-conflict resolver on Codex.</div>
+      <div class="meta"><span>CLAUDE OPUS 4.7</span><span>SONNET 4.6</span><span>GEMINI 3.1-PRO</span><span>CODEX 1</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=example-pipelines#pipeline-2--landing-page-marketing-sprint-saas-landing-page">
+      <div class="title">2 · Landing page marketing sprint with parallel copy fan-out</div>
+      <div class="subtitle">5 sibling copy tasks running in parallel, each in its own worktree. Gemini handles volume, Opus composes Tailwind, Sonnet QAs accessibility.</div>
+      <div class="meta"><span>SONNET 4.6</span><span>GEMINI 3.1-PRO</span><span>OPUS 4.7</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=example-pipelines#pipeline-3--agentflow-self-improve-the-recursive-one">
+      <div class="title">3 · agentflow self improve — the recursive one</div>
+      <div class="subtitle">A meta-agent reads last week's logs, clusters failures, and schedules fix pipelines via AgentFlow's own MCP server. Bounded fan-out; human approval required.</div>
+      <div class="meta"><span>MCP</span><span>SONNET 4.6</span><span>GEMINI 3.1-PRO</span></div>
+    </a>
+  </div>
+</section>
+
+<section class="section" style="background: var(--surface-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="wrap">
+    <span class="eyebrow">INSIDE THE DASHBOARD</span>
+    <h2>Nine agents, one board, one SQLite DB.</h2>
+    <p class="section-lead">Everything runs locally. Nothing leaves your machine. The UI, the REST API, and the MCP server all share the same database.</p>
+    <div class="shot">
+      <img src="./assets/crew-directory.png" alt="Crew directory with 9 AI agents assigned to roles and models" />
+      <div class="shot-caption">The Crew view — named roles mapped to models. Atlas is Systems Architect on Opus. Forge is Senior Developer on Opus. Pixel is UI/UX on Sonnet. Rocket is DevOps on GPT-5.4.</div>
+    </div>
+    <div class="shot">
+      <img src="./assets/dashboard-pipelines-list.png" alt="Dashboard overview with pipeline sidebar and running board" />
+      <div class="shot-caption">Overview — multiple pipelines in various states. Running, blocked, completed, queued. Close your laptop mid-run, come back to it.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap-narrow">
+    <span class="eyebrow">READ MORE</span>
+    <h2>The full story.</h2>
+    <p class="section-lead" style="margin-bottom:24px">Four sub-pages. Each stands alone. Each links back into the others.</p>
+    <a class="card-link" href="./post.html?p=why-im-building-agentflow">
+      <div class="title">Why I'm building AgentFlow — the hub post</div>
+      <div class="subtitle">The three-terminal problem, the three ideas, the three pipelines, the three screenshots. Start here if you want one pass at the whole thing.</div>
+      <div class="meta"><span>8 MIN</span><span>FOUNDER VOICE</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=example-pipelines">
+      <div class="title">Three pipelines I actually run in AgentFlow</div>
+      <div class="subtitle">Full recipes. Task graphs in ASCII. Agent + model per task. Real prompt snippets. Gotchas. No toy examples.</div>
+      <div class="meta"><span>6 MIN</span><span>CONCRETE</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=worktree-deep-dive">
+      <div class="title">Why worktree isolation is load-bearing</div>
+      <div class="subtitle">The bug that made me care. Why branches alone don't solve it. How AgentFlow uses worktrees. Steal the pattern without installing anything.</div>
+      <div class="meta"><span>4 MIN</span><span>TECHNICAL</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=agents-driving-agents">
+      <div class="title">Agents driving agents — the MCP angle</div>
+      <div class="subtitle">The 17 MCP tools. The recursive self-improve pattern. Bounded fan-out. Human approval between layers. When this is worth doing, when it isn't.</div>
+      <div class="meta"><span>5 MIN</span><span>META-AGENT PATTERNS</span></div>
+    </a>
+    <a class="card-link" href="./post.html?p=choosing-the-right-model">
+      <div class="title">Picking the right model for each task</div>
+      <div class="subtitle">A working dev's cheatsheet. Opus vs Sonnet vs Codex vs Gemini vs GPT-5.4. What I use where. Anti-patterns I've fallen into.</div>
+      <div class="meta"><span>5 MIN</span><span>DEFAULTS TABLE</span></div>
+    </a>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 24px;">
+  <div class="wrap-narrow">
+    <div class="card" style="border-left:2px solid var(--accent); padding:28px;">
+      <div class="card-num">TRY IT</div>
+      <h3 style="margin-bottom:14px">Clone, run, drive it from your agent.</h3>
+      <pre style="background:var(--surface-1); padding:16px; border-radius:8px; overflow:auto; font-size:13px; line-height:1.6"><code>git clone https://github.com/harun-yardimci/agentflow.git
+cd agentflow
+npm install
+npm run dev</code></pre>
+      <p style="color:var(--text-secondary); font-size:14px; margin-top:12px; line-height:1.65">
+        Apache-2.0, self-hosted, local-first. No accounts, no cloud, no waitlist. If you're a solo dev,
+        indie hacker, or team-of-one builder already running Claude Code / Codex / Gemini CLI — this is for you.
+      </p>
+      <p style="color:var(--text-secondary); font-size:14px; margin-top:12px; line-height:1.65">
+        <a href="https://github.com/harun-yardimci/agentflow">github.com/harun-yardimci/agentflow</a>
+        · <a href="https://github.com/harun-yardimci/agentflow/issues">issues</a>
+        · <a href="https://github.com/harun-yardimci/agentflow/blob/main/CHANGELOG.md">changelog</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div>AgentFlow · v1.0.0 · Apache-2.0</div>
+    <div>Last updated 2026-05-17</div>
+  </div>
+</footer>
+
+</body>
+</html>

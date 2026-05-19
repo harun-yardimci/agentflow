@@ -79,7 +79,7 @@ function archiveInheritedFollowUpsForParent(
       AND task_type IN ('spawned', 'system')
       AND branch IS NULL
       AND archived_at IS NULL
-      AND status != 'running'
+      AND status = 'completed'
   `);
 
   const updateChild = db.prepare(

@@ -22,6 +22,8 @@ interface ProviderRow {
   cli_command: string;
   sort_order: number;
   enabled: number;
+  execution_mode: string;
+  api_key: string | null;
 }
 
 interface ModelRow {
@@ -45,6 +47,8 @@ function formatProvider(row: ProviderRow) {
     cliCommand: row.cli_command,
     sortOrder: row.sort_order,
     enabled: row.enabled === 1,
+    executionMode: (row.execution_mode === 'api' ? 'api' : 'cli') as 'cli' | 'api',
+    hasApiKey: !!row.api_key,
   };
 }
 
@@ -97,8 +101,18 @@ router.get('/providers', (_req, res) => {
 router.post('/providers', validate(CreateProviderSchema), (req, res) => {
   const db = getDb();
   db.prepare(
-    'INSERT INTO providers (id, label, color, bg, cli_command, sort_order, enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run(req.body.id, req.body.label, req.body.color, req.body.bg, req.body.cliCommand, req.body.sortOrder ?? 0, req.body.enabled !== false ? 1 : 0);
+    'INSERT INTO providers (id, label, color, bg, cli_command, sort_order, enabled, execution_mode, api_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    req.body.id,
+    req.body.label,
+    req.body.color,
+    req.body.bg,
+    req.body.cliCommand,
+    req.body.sortOrder ?? 0,
+    req.body.enabled !== false ? 1 : 0,
+    req.body.executionMode ?? 'cli',
+    req.body.apiKey ?? null,
+  );
   const row = db.prepare('SELECT * FROM providers WHERE id = ?').get(req.body.id) as ProviderRow;
   res.status(201).json(formatProvider(row));
 });
@@ -117,6 +131,8 @@ router.put('/providers/:id', validate(UpdateProviderSchema), (req, res) => {
   if (req.body.cliCommand !== undefined) { fields.push('cli_command = ?'); values.push(req.body.cliCommand); }
   if (req.body.sortOrder !== undefined) { fields.push('sort_order = ?'); values.push(req.body.sortOrder); }
   if (req.body.enabled !== undefined) { fields.push('enabled = ?'); values.push(req.body.enabled ? 1 : 0); }
+  if (req.body.executionMode !== undefined) { fields.push('execution_mode = ?'); values.push(req.body.executionMode); }
+  if (req.body.apiKey !== undefined) { fields.push('api_key = ?'); values.push(req.body.apiKey); }
 
   if (fields.length > 0) {
     values.push(req.params.id!);

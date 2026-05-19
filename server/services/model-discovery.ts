@@ -321,13 +321,132 @@ function discoverGeminiModels(): DiscoveredModel[] {
 interface ProviderDiscoveryConfig {
   id: string;
   discover: () => DiscoveredModel[];
+  discoverViaApi: (apiKey: string) => Promise<DiscoveredModel[]>;
 }
 
 const PROVIDER_CONFIGS: ProviderDiscoveryConfig[] = [
-  { id: 'claude', discover: discoverClaudeModels },
-  { id: 'codex', discover: discoverCodexModels },
-  { id: 'gemini', discover: discoverGeminiModels },
+  { id: 'claude', discover: discoverClaudeModels, discoverViaApi: discoverClaudeModelsViaApi },
+  { id: 'codex', discover: discoverCodexModels, discoverViaApi: discoverCodexModelsViaApi },
+  { id: 'gemini', discover: discoverGeminiModels, discoverViaApi: discoverGeminiModelsViaApi },
 ];
+
+// ─── API-based discovery ───
+
+async function discoverClaudeModelsViaApi(apiKey: string): Promise<DiscoveredModel[]> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+  const list = await client.models.list({ limit: 100 });
+  const items = list.data ?? [];
+
+  const tiers = new Map<string, { id: string; displayName: string }[]>();
+  for (const item of items) {
+    const m = item.id.match(/^claude-(opus|sonnet|haiku)/);
+    if (!m) continue;
+    const tier = m[1]!;
+    const existing = tiers.get(tier) ?? [];
+    existing.push({ id: item.id, displayName: item.display_name ?? item.id });
+    tiers.set(tier, existing);
+  }
+
+  const sortMap: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
+  const results: DiscoveredModel[] = [];
+
+  for (const [tier, models] of tiers) {
+    if (models.length === 0) continue;
+    models.sort((a, b) => b.id.localeCompare(a.id));
+    const top = models[0]!;
+    results.push({
+      id: `claude:${tier}`,
+      provider: 'claude',
+      label: top.displayName || `Claude ${tier}`,
+      cliFlag: top.id,
+      sortOrder: sortMap[tier] ?? 10,
+    });
+  }
+  return results;
+}
+
+async function discoverCodexModelsViaApi(apiKey: string): Promise<DiscoveredModel[]> {
+  const { default: OpenAI } = await import('openai');
+  const client = new OpenAI({ apiKey });
+  const res = await client.models.list();
+  const allIds = res.data.map((m) => m.id);
+
+  const cleanPattern = /^gpt-\d+(\.\d+)?(-codex(-mini|-max)?)?$/;
+  const filtered = allIds.filter((id) => cleanPattern.test(id));
+  const unique = [...new Set(filtered)].sort((a, b) => {
+    const va = a.match(/gpt-(\d+(?:\.\d+)?)/)?.[1] ?? '0';
+    const vb = b.match(/gpt-(\d+(?:\.\d+)?)/)?.[1] ?? '0';
+    return parseFloat(vb) - parseFloat(va);
+  });
+
+  return unique.map((id, index) => ({
+    id: `codex:${id}`,
+    provider: 'codex',
+    label: `Codex ${id}`,
+    cliFlag: id,
+    sortOrder: index,
+  }));
+}
+
+interface GeminiApiModel {
+  name: string;
+  displayName?: string;
+  supportedGenerationMethods?: string[];
+}
+
+async function discoverGeminiModelsViaApi(apiKey: string): Promise<DiscoveredModel[]> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Gemini API responded with ${res.status}`);
+  }
+  const data = (await res.json()) as { models?: GeminiApiModel[] };
+  const models = data.models ?? [];
+  const ids = models
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => m.name.replace(/^models\//, ''));
+
+  const modelPattern = /^gemini-(\d+(?:\.\d+)?)-(pro|flash)(-lite)?(-\w+)?$/;
+  const filtered = ids.filter((id) => modelPattern.test(id));
+
+  const families = new Map<string, string[]>();
+  for (const id of filtered) {
+    const match = id.match(/^(gemini-\d+(?:\.\d+)?-(?:pro|flash)(?:-lite)?)/);
+    if (!match) continue;
+    const base = match[1]!;
+    const existing = families.get(base) ?? [];
+    existing.push(id);
+    families.set(base, existing);
+  }
+
+  const sortPriority: Record<string, number> = {
+    'gemini-3.1-pro': 0,
+    'gemini-3.1-flash-lite': 1,
+    'gemini-3-pro': 2,
+    'gemini-3-flash': 3,
+    'gemini-2.5-pro': 4,
+    'gemini-2.5-flash': 5,
+    'gemini-2.0-flash': 6,
+    'gemini-2.0-pro': 7,
+  };
+
+  const results: DiscoveredModel[] = [];
+  let fallbackOrder = 20;
+  for (const [base, variants] of families) {
+    const cliFlag = variants.sort((a, b) => a.length - b.length)[0]!;
+    const shortName = base.replace('gemini-', '');
+    const order = sortPriority[base] ?? fallbackOrder++;
+    results.push({
+      id: `gemini:${shortName}`,
+      provider: 'gemini',
+      label: `Gemini ${shortName}`,
+      cliFlag,
+      sortOrder: order,
+    });
+  }
+  return results;
+}
 
 // ─── Sync logic ───
 
@@ -392,29 +511,59 @@ export async function discoverModels(providerFilter?: string): Promise<Discovery
     ? PROVIDER_CONFIGS.filter((c) => c.id === providerFilter)
     : PROVIDER_CONFIGS;
 
-  return configs.map((config) => {
+  const db = getDb();
+  const results: DiscoveryResult[] = [];
+
+  for (const config of configs) {
+    const row = db
+      .prepare('SELECT execution_mode, api_key FROM providers WHERE id = ?')
+      .get(config.id) as { execution_mode: string; api_key: string | null } | undefined;
+    const mode = row?.execution_mode === 'api' ? 'api' : 'cli';
+    const apiKey = row?.api_key ?? null;
+
     try {
-      const discovered = config.discover();
+      let discovered: DiscoveredModel[];
+      if (mode === 'api') {
+        if (!apiKey) {
+          results.push({
+            provider: config.id,
+            added: [],
+            updated: [],
+            removed: [],
+            error: 'API mode is selected but no API key is configured',
+          });
+          continue;
+        }
+        discovered = await config.discoverViaApi(apiKey);
+      } else {
+        discovered = config.discover();
+      }
+
       if (discovered.length === 0) {
-        return {
+        results.push({
           provider: config.id,
           added: [],
           updated: [],
           removed: [],
-          error: `CLI not found or no models detected`,
-        };
+          error: mode === 'api'
+            ? 'API returned no matching models'
+            : 'CLI not found or no models detected',
+        });
+        continue;
       }
       const sync = syncModelsToDb(config.id, discovered);
-      return { provider: config.id, ...sync };
+      results.push({ provider: config.id, ...sync });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return {
+      results.push({
         provider: config.id,
         added: [],
         updated: [],
         removed: [],
         error: message,
-      };
+      });
     }
-  });
+  }
+
+  return results;
 }

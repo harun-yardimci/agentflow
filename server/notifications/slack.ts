@@ -1,10 +1,23 @@
+import type { NotificationPayload } from './telegram.js';
+
+function escapeSlack(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 /** Send a notification via Slack Incoming Webhook or Bot API */
 export async function sendSlackMessage(
   webhookUrl: string,
   botToken: string,
   channel: string,
-  text: string,
+  message: NotificationPayload,
 ): Promise<void> {
+  const titleLine = `${message.emoji} *${escapeSlack(message.title)}*`;
+  const bodyLine = escapeSlack(message.body);
+  const text = `${titleLine}\n${bodyLine}`;
+
   const blocks = [
     {
       type: 'section',

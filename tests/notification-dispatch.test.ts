@@ -80,11 +80,12 @@ describe('Notification Dispatch', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(mockSendTelegram).toHaveBeenCalled();
-    const [token, chatId, text] = mockSendTelegram.mock.calls[0]!;
+    const [token, chatId, payload] = mockSendTelegram.mock.calls[0]!;
     expect(token).toBe('test-bot-token');
     expect(chatId).toBe('12345');
-    expect(text).toContain('Build Widget');
-    expect(text).toContain('completed');
+    expect(payload.body).toContain('Build Widget');
+    expect(payload.body).toContain('completed');
+    expect(payload.title).toBe('AgentFlow');
   });
 
   it('should send to Slack on task:failed', async () => {
@@ -98,10 +99,10 @@ describe('Notification Dispatch', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(mockSendSlack).toHaveBeenCalled();
-    const [webhook, , , text] = mockSendSlack.mock.calls[0]!;
+    const [webhook, , , payload] = mockSendSlack.mock.calls[0]!;
     expect(webhook).toBe('https://hooks.slack.com/test');
-    expect(text).toContain('Deploy');
-    expect(text).toContain('failed');
+    expect(payload.body).toContain('Deploy');
+    expect(payload.body).toContain('failed');
   });
 
   it('should send to both channels when both enabled', async () => {
@@ -171,9 +172,9 @@ describe('Notification Dispatch', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(mockSendTelegram).toHaveBeenCalled();
-    const text = mockSendTelegram.mock.calls[0]![2];
-    expect(text).toContain('CI/CD Pipeline');
-    expect(text).toContain('failed');
+    const payload = mockSendTelegram.mock.calls[0]![2];
+    expect(payload.body).toContain('CI/CD Pipeline');
+    expect(payload.body).toContain('failed');
   });
 
   it('should handle task:blocked event', async () => {
@@ -187,9 +188,9 @@ describe('Notification Dispatch', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(mockSendTelegram).toHaveBeenCalled();
-    const text = mockSendTelegram.mock.calls[0]![2];
-    expect(text).toContain('Code Review');
-    expect(text).toContain('blocked');
+    const payload = mockSendTelegram.mock.calls[0]![2];
+    expect(payload.body).toContain('Code Review');
+    expect(payload.body).toContain('blocked');
   });
 
   it('should handle task:approval_needed event', async () => {
@@ -203,8 +204,8 @@ describe('Notification Dispatch', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(mockSendTelegram).toHaveBeenCalled();
-    const text = mockSendTelegram.mock.calls[0]![2];
-    expect(text).toContain('Final Review');
-    expect(text).toContain('approval');
+    const payload = mockSendTelegram.mock.calls[0]![2];
+    expect(payload.body).toContain('Final Review');
+    expect(payload.body).toContain('approval');
   });
 });

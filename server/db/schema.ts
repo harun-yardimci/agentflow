@@ -693,6 +693,14 @@ export function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_models_provider ON models(provider);
   `);
 
+  // Migration: provider-level execution mode + api key (cli or api)
+  try {
+    db.exec("ALTER TABLE providers ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'cli'");
+  } catch { /* exists */ }
+  try {
+    db.exec('ALTER TABLE providers ADD COLUMN api_key TEXT');
+  } catch { /* exists */ }
+
   // Migration: map bare provider model keys to specific sub-models
   db.exec(`
     UPDATE tasks SET model = 'claude:sonnet' WHERE model = 'claude';

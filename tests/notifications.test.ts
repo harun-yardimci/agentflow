@@ -35,20 +35,41 @@ describe('Telegram sendTelegramMessage', () => {
     db.close();
   });
 
-  it('should call Telegram Bot API with correct format', async () => {
+  it('should call Telegram Bot API with HTML parse_mode and bold title', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
     } as unknown as Response);
 
-    await sendTelegramMessage('bot-token', '12345', 'Hello!');
+    await sendTelegramMessage('bot-token', '12345', {
+      emoji: '\u2705',
+      title: 'AgentFlow',
+      body: 'Hello!',
+    });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     const [url, opts] = fetchSpy.mock.calls[0]!;
     expect(url).toBe('https://api.telegram.org/botbot-token/sendMessage');
     const body = JSON.parse((opts as RequestInit).body as string);
     expect(body.chat_id).toBe('12345');
-    expect(body.text).toBe('Hello!');
-    expect(body.parse_mode).toBe('Markdown');
+    expect(body.text).toBe('\u2705 <b>AgentFlow</b>\nHello!');
+    expect(body.parse_mode).toBe('HTML');
+  });
+
+  it('should escape HTML special characters in body and title', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+    } as unknown as Response);
+
+    await sendTelegramMessage('bot-token', '12345', {
+      emoji: '\u274c',
+      title: 'A & B',
+      body: 'Task "<script>" failed: 3 < 5 & 2 > 1',
+    });
+
+    const body = JSON.parse((fetchSpy.mock.calls[0]![1] as RequestInit).body as string);
+    expect(body.text).toBe(
+      '\u274c <b>A &amp; B</b>\nTask "&lt;script&gt;" failed: 3 &lt; 5 &amp; 2 &gt; 1',
+    );
   });
 
   it('should throw on API error', async () => {
@@ -59,7 +80,7 @@ describe('Telegram sendTelegramMessage', () => {
     } as unknown as Response);
 
     await expect(
-      sendTelegramMessage('bad-token', '123', 'Hello')
+      sendTelegramMessage('bad-token', '123', { emoji: '', title: 'X', body: 'Hello' })
     ).rejects.toThrow('Telegram API error 401');
   });
 });
@@ -80,6 +101,8 @@ describe('Slack sendSlackMessage', () => {
     db.close();
   });
 
+  const msg = (body = 'Hello') => ({ emoji: '\u2705', title: 'AgentFlow', body });
+
   it('should call webhook URL for notification', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
@@ -90,7 +113,7 @@ describe('Slack sendSlackMessage', () => {
       'https://hooks.slack.com/services/test',
       '',
       '',
-      'Hello from test',
+      msg('Hello from test'),
     );
 
     expect(fetchSpy).toHaveBeenCalledOnce();
@@ -108,7 +131,7 @@ describe('Slack sendSlackMessage', () => {
       'https://hooks.slack.com/test',
       'xoxb-token',
       '#general',
-      'Hello',
+      msg(),
     );
 
     expect(fetchSpy).toHaveBeenCalledOnce();
@@ -117,9 +140,27 @@ describe('Slack sendSlackMessage', () => {
     expect((opts as RequestInit).headers).toHaveProperty('Authorization', 'Bearer xoxb-token');
   });
 
+  it('should escape <, >, & in title and body for mrkdwn safety', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    } as unknown as Response);
+
+    await sendSlackMessage('', 'xoxb-token', '#x', {
+      emoji: '\u274c',
+      title: 'Foo & Bar',
+      body: 'task <a> failed: 3 < 5 & 2 > 1',
+    });
+
+    const body = JSON.parse((fetchSpy.mock.calls[0]![1] as RequestInit).body as string);
+    expect(body.text).toBe(
+      '\u274c *Foo &amp; Bar*\ntask &lt;a&gt; failed: 3 &lt; 5 &amp; 2 &gt; 1',
+    );
+  });
+
   it('should throw when no webhook or bot token', async () => {
     await expect(
-      sendSlackMessage('', '', '', 'Hello')
+      sendSlackMessage('', '', '', msg())
     ).rejects.toThrow('No Slack webhook URL or bot token configured');
   });
 
@@ -130,7 +171,7 @@ describe('Slack sendSlackMessage', () => {
     } as unknown as Response);
 
     await expect(
-      sendSlackMessage('', 'xoxb-token', '#bad', 'Hello')
+      sendSlackMessage('', 'xoxb-token', '#bad', msg())
     ).rejects.toThrow('Slack API error: channel_not_found');
   });
 
@@ -141,7 +182,7 @@ describe('Slack sendSlackMessage', () => {
     } as unknown as Response);
 
     await expect(
-      sendSlackMessage('https://hooks.slack.com/test', '', '', 'Hello')
+      sendSlackMessage('https://hooks.slack.com/test', '', '', msg())
     ).rejects.toThrow('Slack webhook error 500');
   });
 });

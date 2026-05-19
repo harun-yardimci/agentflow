@@ -155,7 +155,11 @@ app.post('/api/integrations/test', async (req, res) => {
       }
 
       const token = tokenRow.value.startsWith('enc:') ? dec(tokenRow.value) : tokenRow.value;
-      await send(token, chatIdRow.value, '\ud83e\udd16 *AgentFlow*\nTest notification — connection successful!');
+      await send(token, chatIdRow.value, {
+        emoji: '\ud83e\udd16',
+        title: 'AgentFlow',
+        body: 'Test notification — connection successful!',
+      });
       res.json({ ok: true });
     } else if (channel === 'slack') {
       const { sendSlackMessage: send } = await import('./notifications/slack.js');
@@ -172,7 +176,11 @@ app.post('/api/integrations/test', async (req, res) => {
         return;
       }
 
-      await send(webhook, botToken, channelRow?.value ?? '', '\ud83e\udd16 *AgentFlow*\nTest notification — connection successful!');
+      await send(webhook, botToken, channelRow?.value ?? '', {
+        emoji: '\ud83e\udd16',
+        title: 'AgentFlow',
+        body: 'Test notification — connection successful!',
+      });
       res.json({ ok: true });
     } else {
       res.status(400).json({ error: 'Unknown channel' });

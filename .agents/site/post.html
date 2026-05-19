@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgentFlow · Post</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="./index.html" class="nav-brand"><span class="nav-brand-dot"></span>AGENTFLOW</a>
+    <div class="nav-links">
+      <a href="./index.html">Overview</a>
+      <a href="./blog.html" class="active">Blog</a>
+      <a href="./linkedin.html">LinkedIn drafts</a>
+      <a href="https://github.com/harun-yardimci/agentflow" class="nav-badge">GITHUB →</a>
+    </div>
+  </div>
+</nav>
+
+<article class="post">
+  <div class="wrap-narrow">
+    <div id="post-header" class="post-header"></div>
+    <div id="post-body" class="post-body"></div>
+    <div id="post-loading" class="muted" style="padding:32px 0">Loading…</div>
+  </div>
+</article>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div>AgentFlow · v1.0.0 · Apache-2.0</div>
+    <div><a href="./blog.html">← All posts</a></div>
+  </div>
+</footer>
+
+<script>
+  const POSTS = {
+    'why-im-building-agentflow':   { file: 'why-im-building-agentflow.md',  title: "Why I'm building AgentFlow", read: '8 min', tag: 'FOUNDER VOICE' },
+    'example-pipelines':           { file: 'example-pipelines.md',           title: 'Three pipelines I actually run in AgentFlow', read: '6 min', tag: 'CONCRETE' },
+    'worktree-deep-dive':          { file: 'worktree-deep-dive.md',          title: 'Why worktree isolation is load-bearing', read: '4 min', tag: 'TECHNICAL' },
+    'agents-driving-agents':       { file: 'agents-driving-agents.md',       title: 'Agents driving agents — the MCP angle', read: '5 min', tag: 'META-AGENT PATTERNS' },
+    'choosing-the-right-model':    { file: 'choosing-the-right-model.md',    title: 'Picking the right model for each task', read: '5 min', tag: 'DEFAULTS TABLE' },
+  };
+
+  function stripFrontmatter(md) {
+    const lines = md.split('\n');
+    if (lines[0].trim() !== '---') return { meta: {}, body: md };
+    const end = lines.slice(1).findIndex(l => l.trim() === '---');
+    if (end === -1) return { meta: {}, body: md };
+    const fm = lines.slice(1, end + 1);
+    const meta = {};
+    let currentKey = null;
+    for (const line of fm) {
+      const m = line.match(/^([a-z_]+):\s*(.*)$/i);
+      if (m) { meta[m[1]] = m[2].trim().replace(/^["']|["']$/g, ''); currentKey = m[1]; }
+    }
+    return { meta, body: lines.slice(end + 2).join('\n') };
+  }
+
+  async function load() {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('p') || 'why-im-building-agentflow';
+    const post = POSTS[slug];
+    if (!post) { document.getElementById('post-loading').textContent = 'Post not found.'; return; }
+
+    document.title = 'AgentFlow · ' + post.title;
+    try {
+      const res = await fetch('./content/' + post.file);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const raw = await res.text();
+      const { meta, body } = stripFrontmatter(raw);
+
+      // Fix relative asset + post links; strip leading H1 since we render title in header
+      let fixed = body
+        .replace(/^\s*#\s+.+\n/, '')
+        .replace(/\]\((?:\.\.\/)+assets\//g, '](./assets/')
+        .replace(/\]\(assets\//g, '](./assets/')
+        .replace(/\]\(([a-z0-9-]+)\.md(#[^)]+)?\)/gi, (_m, s, hash) => '](./post.html?p=' + s + (hash || '') + ')');
+
+      const header = document.getElementById('post-header');
+      const subtitle = meta.subtitle ? `<div class="post-subtitle">${meta.subtitle}</div>` : '';
+      header.innerHTML = `
+        <h1>${meta.title || post.title}</h1>
+        ${subtitle}
+        <div class="post-meta">
+          <span>${meta.date || ''}</span>
+          <span>· ${meta.estimated_read || post.read}</span>
+          <span>· ${post.tag}</span>
+          ${meta.status ? `<span class="pill">${meta.status.toUpperCase()}</span>` : ''}
+        </div>
+      `;
+
+      const html = marked.parse(fixed, { gfm: true, breaks: false });
+      document.getElementById('post-body').innerHTML = html;
+      document.getElementById('post-loading').remove();
+
+      // Handle in-page anchors after render
+      if (location.hash) {
+        setTimeout(() => {
+          const el = document.getElementById(location.hash.slice(1));
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
+    } catch (e) {
+      document.getElementById('post-loading').textContent = 'Failed to load post: ' + e.message;
+    }
+  }
+  load();
+</script>
+
+</body>
+</html>

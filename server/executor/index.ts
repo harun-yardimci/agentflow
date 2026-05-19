@@ -1,10 +1,14 @@
 import { CLIExecutor } from './cli-executor.js';
+import { APIExecutor, shouldUseApiExecutor } from './api-executor.js';
 import type { BaseExecutor } from './types.js';
 
 export type { BaseExecutor, ExecutorInput, ExecutorResult } from './types.js';
 
-/** Create a CLI executor (only execution mode supported) */
-export function createExecutor(_model: string): BaseExecutor {
+/** Create an executor for the given model — API if provider configured for API, else CLI */
+export function createExecutor(model: string): BaseExecutor {
+  if (shouldUseApiExecutor(model)) {
+    return new APIExecutor();
+  }
   return new CLIExecutor();
 }
 

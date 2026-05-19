@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { useAgents } from '@/context/AgentContext';
 import { useModels } from '@/context/ModelContext';
 import { usePipelines } from '@/context/PipelineContext';
+import type { UpdateProviderInput } from '@/lib/api';
 import {
   Badge,
   Button,
@@ -37,9 +38,9 @@ interface ProviderMeta {
 }
 
 const PROVIDER_META: ProviderMeta[] = [
-  { key: 'claude', label: 'Claude CLI', cli: 'claude' },
-  { key: 'gemini', label: 'Gemini CLI', cli: 'gemini' },
-  { key: 'codex', label: 'Codex CLI', cli: 'codex' },
+  { key: 'claude', label: 'Claude', cli: 'claude' },
+  { key: 'gemini', label: 'Gemini', cli: 'gemini' },
+  { key: 'codex', label: 'Codex', cli: 'codex' },
 ];
 
 function parseDurationSeconds(duration: string | null): number | null {
@@ -288,7 +289,12 @@ function buildProviderCardStats(
 export function ModelsPage(): JSX.Element {
   const { pipelines } = usePipelines();
   const { agents } = useAgents();
-  const { getModel, getProviderKey, refresh: refreshModels } = useModels();
+  const {
+    providers: providerDefs,
+    getModel,
+    getProviderKey,
+    refresh: refreshModels,
+  } = useModels();
 
   const allTasks = useMemo(
     () => pipelines.flatMap((pipeline) => pipeline.tasks),
@@ -306,7 +312,6 @@ export function ModelsPage(): JSX.Element {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [analytics, setAnalytics] = useState<UsageAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [discovering, setDiscovering] = useState(false);
   const [discoveryResults, setDiscoveryResults] =
     useState<DiscoveryResult[] | null>(null);
 
@@ -354,20 +359,22 @@ export function ModelsPage(): JSX.Element {
     }
   }, []);
 
-  const handleDiscover = useCallback(async () => {
-    setDiscovering(true);
-    setDiscoveryResults(null);
+  const syncProvider = useCallback(async (providerId: string) => {
     setError(null);
-
+    setDiscoveryResults((current) =>
+      current ? current.filter((r) => r.provider !== providerId) : null,
+    );
     try {
-      const { results } = await api.discoverModels();
-      setDiscoveryResults(results);
+      const { results } = await api.discoverModels(providerId);
+      setDiscoveryResults((current) => {
+        const others = current?.filter((r) => r.provider !== providerId) ?? [];
+        return [...others, ...results];
+      });
       await refreshModels();
       await fetchAnalytics();
     } catch (discoverError) {
       setError(toErrorMessage(discoverError));
-    } finally {
-      setDiscovering(false);
+      throw discoverError;
     }
   }, [fetchAnalytics, refreshModels]);
 
@@ -442,6 +449,16 @@ export function ModelsPage(): JSX.Element {
     }
   };
 
+  const updateProvider = async (model: string, update: UpdateProviderInput) => {
+    try {
+      await api.updateProviderDef(model, update);
+      await refreshModels();
+    } catch (updateError) {
+      setError(toErrorMessage(updateError));
+      throw updateError;
+    }
+  };
+
   if (detecting && settingsLoading && analyticsLoading) {
     return <ModelsPageSkeleton />;
   }
@@ -464,68 +481,18 @@ export function ModelsPage(): JSX.Element {
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              disabled={discovering}
-              onClick={() => void handleDiscover()}
-              variant="primary"
-            >
-              {discovering ? 'Syncing...' : 'Sync Models from CLI'}
-            </Button>
-            <Button
-              disabled={detecting}
-              onClick={() => void detectProviders()}
-              variant="secondary"
-            >
-              {detecting ? 'Detecting...' : 'Re-detect Providers'}
-            </Button>
-          </div>
+          <Button
+            disabled={detecting}
+            onClick={() => void detectProviders()}
+            variant="secondary"
+          >
+            {detecting ? 'Detecting...' : 'Re-detect Providers'}
+          </Button>
         </header>
 
         {error && (
           <div className="rounded-md border border-accent-red/35 bg-accent-red-bg px-3 py-2 text-sm text-accent-red">
             {error}
-          </div>
-        )}
-
-        {discoveryResults && (
-          <div className="space-y-2">
-            {discoveryResults.map((result) => {
-              const hasChanges =
-                result.added.length > 0
-                || result.updated.length > 0
-                || result.removed.length > 0;
-              const isError = !!result.error;
-
-              return (
-                <div
-                  className={cn(
-                    'rounded-md border px-3 py-2 text-sm',
-                    isError
-                      ? 'border-accent-red/35 bg-accent-red-bg text-accent-red'
-                      : hasChanges
-                        ? 'border-accent-green/35 bg-accent-green/5 text-accent-green'
-                        : 'border-border-secondary bg-surface-2 text-text-secondary',
-                  )}
-                  key={result.provider}
-                >
-                  <span className="font-semibold">{result.provider}</span>
-                  {isError && <span className="ml-2">{result.error}</span>}
-                  {!isError && !hasChanges && (
-                    <span className="ml-2">Up to date</span>
-                  )}
-                  {result.added.length > 0 && (
-                    <span className="ml-2">+{result.added.length} added</span>
-                  )}
-                  {result.updated.length > 0 && (
-                    <span className="ml-2">{result.updated.length} updated</span>
-                  )}
-                  {result.removed.length > 0 && (
-                    <span className="ml-2">-{result.removed.length} removed</span>
-                  )}
-                </div>
-              );
-            })}
           </div>
         )}
 
@@ -611,19 +578,27 @@ export function ModelsPage(): JSX.Element {
               return null;
             }
 
+            const providerDef = providerDefs.find((p) => p.id === provider.key);
+
             return (
               <ModelCard
                 detecting={detecting}
                 enabled={
                   enabledByModel[provider.key as keyof typeof enabledByModel] ?? false
                 }
+                executionMode={providerDef?.executionMode ?? 'cli'}
+                hasApiKey={providerDef?.hasApiKey ?? false}
                 installed={providers[provider.key as keyof ProviderStatus] ?? false}
                 key={provider.key}
                 model={provider.key}
+                onRecheck={detectProviders}
+                onSyncModels={() => syncProvider(provider.key)}
                 onToggle={toggleProvider}
+                onUpdateProvider={updateProvider}
                 providerLabel={provider.label}
                 share={modelCard.share}
                 stats={modelCard.stats}
+                syncResult={discoveryResults?.find((r) => r.provider === provider.key)}
               />
             );
           })}

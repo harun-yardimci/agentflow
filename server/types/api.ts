@@ -164,6 +164,8 @@ export const BatchCreateTasksSchema = z.object({
 
 // ─── Provider & Model CRUD ───
 
+export const ExecutionModeEnum = z.enum(['cli', 'api']);
+
 export const CreateProviderSchema = z.object({
   id: z.string().min(1).max(50),
   label: z.string().min(1).max(200),
@@ -172,6 +174,8 @@ export const CreateProviderSchema = z.object({
   cliCommand: z.string().min(1).max(100),
   sortOrder: z.number().int().min(0).default(0),
   enabled: z.boolean().default(true),
+  executionMode: ExecutionModeEnum.default('cli'),
+  apiKey: z.string().max(500).nullable().default(null),
 });
 
 export const UpdateProviderSchema = CreateProviderSchema.partial().omit({ id: true });
