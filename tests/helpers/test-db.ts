@@ -125,7 +125,9 @@ const SCHEMA = `
     bg TEXT NOT NULL,
     cli_command TEXT NOT NULL,
     sort_order INTEGER NOT NULL DEFAULT 0,
-    enabled INTEGER NOT NULL DEFAULT 1
+    enabled INTEGER NOT NULL DEFAULT 1,
+    execution_mode TEXT NOT NULL DEFAULT 'cli',
+    api_key TEXT
   );
 
   CREATE TABLE IF NOT EXISTS models (
