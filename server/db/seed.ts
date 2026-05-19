@@ -31,49 +31,6 @@ const MODEL_DEFS = [
   { id: 'codex:o3',      provider: 'codex', label: 'o3',            color: '#22C55E', bg: '#071710', cost_per_1k: 0.020, cli_flag: 'o3',       sort_order: 3 },
 ];
 
-const PIPELINES = [
-  {
-    id: 'p1',
-    name: 'SaaS Landing Page',
-    status: 'running',
-    created: '2025-03-10 09:14',
-    logs: [
-      { time: '2025-03-10 09:14:02', type: 'info',    msg: 'Pipeline initialized' },
-      { time: '2025-03-10 09:14:03', type: 'model',   msg: 'Gemini → Research Agent' },
-      { time: '2025-03-10 09:14:17', type: 'success', msg: 'Market Research completed — 3,200 tokens' },
-      { time: '2025-03-10 09:14:17', type: 'model',   msg: 'Claude → Product Owner' },
-      { time: '2025-03-10 09:14:39', type: 'warning', msg: 'Product Brief awaiting manual approval' },
-    ],
-    tasks: [
-      { id: 't1', name: 'Market Research',  agent_id: 'research',  model: 'gemini', approval: 'auto',   status: 'completed',          stage: 0, input: 'Build a SaaS landing page for a fraud detection tool targeting fintech companies.', output: '3 competitors identified. Target: fintech CTOs. Recommended tone: technical-confident.', tokens: 3200, duration: '14s', depends_on: [] },
-      { id: 't2', name: 'Product Brief',    agent_id: 'product',   model: 'claude', approval: 'manual', status: 'awaiting_approval',  stage: 1, input: 'Research output + idea brief', output: 'PRD: Hero, Features, Pricing, CTA. Tone: dark, technical.', tokens: 5100, duration: '22s', depends_on: ['t1'] },
-      { id: 't3', name: 'Copywriting',      agent_id: 'content',   model: 'gemini', approval: 'auto',   status: 'queued',             stage: 2, input: 'PRD output', output: null, tokens: null, duration: null, depends_on: ['t2'] },
-      { id: 't4', name: 'UI Design Spec',   agent_id: 'designer',  model: 'claude', approval: 'manual', status: 'queued',             stage: 2, input: 'PRD output', output: null, tokens: null, duration: null, depends_on: ['t2'] },
-      { id: 't5', name: 'Frontend Code',    agent_id: 'developer', model: 'codex',  approval: 'manual', status: 'queued',             stage: 3, input: 'Design spec + copy', output: null, tokens: null, duration: null, depends_on: ['t3', 't4'] },
-      { id: 't6', name: 'SEO Optimization', agent_id: 'seo',       model: 'gemini', approval: 'auto',   status: 'queued',             stage: 4, input: 'HTML output', output: null, tokens: null, duration: null, depends_on: ['t5'] },
-      { id: 't7', name: 'Deploy',           agent_id: 'deploy',    model: 'codex',  approval: 'manual', status: 'queued',             stage: 4, input: 'Final build', output: null, tokens: null, duration: null, depends_on: ['t5'] },
-    ],
-  },
-  {
-    id: 'p2',
-    name: 'Blog Post: AI in Fraud',
-    status: 'completed',
-    created: '2025-03-09 14:30',
-    logs: [
-      { time: '2025-03-09 14:30:01', type: 'info',    msg: 'Pipeline initialized' },
-      { time: '2025-03-09 14:30:02', type: 'success', msg: 'Topic Research completed' },
-      { time: '2025-03-09 14:31:10', type: 'success', msg: 'Draft Article completed' },
-      { time: '2025-03-09 14:31:55', type: 'success', msg: 'SEO & Publish completed' },
-      { time: '14:31:56', type: 'success', msg: 'Pipeline completed' },
-    ],
-    tasks: [
-      { id: 't8',  name: 'Topic Research', agent_id: 'research', model: 'gemini', approval: 'auto',   status: 'completed', stage: 0, input: 'Blog post on AI fraud detection trends 2025.', output: 'Top trends identified. 5 key sources.', tokens: 2800, duration: '11s', depends_on: [] },
-      { id: 't9',  name: 'Draft Article',  agent_id: 'content',  model: 'claude', approval: 'manual', status: 'completed', stage: 1, input: 'Research output', output: '1200-word draft completed.', tokens: 7400, duration: '31s', depends_on: ['t8'] },
-      { id: 't10', name: 'SEO & Publish',  agent_id: 'seo',      model: 'gemini', approval: 'auto',   status: 'completed', stage: 2, input: 'Draft article',  output: 'Published to /blog/ai-fraud-2025.', tokens: 1100, duration: '8s', depends_on: ['t9'] },
-    ],
-  },
-];
-
 const DEFAULT_SETTINGS = [
   { key: 'port', value: '3100' },
   { key: 'execution_mode', value: 'cli' },
@@ -120,50 +77,20 @@ export function seedDatabase(db: Database.Database): void {
 
   backfillUsageMetrics(db);
 
+  // Seed the starter crew (Scout, Compass, Atlas, ...) on first run only.
+  // No demo pipelines — a fresh install opens an empty board.
   const agentCount = db.prepare('SELECT COUNT(*) as count FROM agents').get() as { count: number };
-  if (agentCount.count > 0) return; // Demo data already seeded
+  if (agentCount.count > 0) return;
 
   const insertAgent = db.prepare(
     'INSERT INTO agents (id, name, icon, title, avatar_seed, default_model, prompt) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
-  const insertPipeline = db.prepare(
-    'INSERT INTO pipelines (id, name, status, created) VALUES (?, ?, ?, ?)'
-  );
-  const insertTask = db.prepare(
-    'INSERT INTO tasks (id, pipeline_id, name, agent_id, model, approval, status, stage, input, output, tokens, duration, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  );
-  const insertDep = db.prepare(
-    'INSERT INTO task_deps (task_id, depends_on_task_id) VALUES (?, ?)'
-  );
-  const insertLog = db.prepare(
-    'INSERT INTO logs (pipeline_id, time, type, msg) VALUES (?, ?, ?, ?)'
-  );
 
-  const seedAll = db.transaction(() => {
+  const seedAgents = db.transaction(() => {
     for (const agent of AGENTS) {
       insertAgent.run(agent.id, agent.name, agent.icon, agent.title, agent.avatar_seed, agent.default_model, agent.prompt);
     }
-
-    for (const pipeline of PIPELINES) {
-      insertPipeline.run(pipeline.id, pipeline.name, pipeline.status, pipeline.created);
-
-      for (const log of pipeline.logs) {
-        insertLog.run(pipeline.id, log.time, log.type, log.msg);
-      }
-
-      for (let i = 0; i < pipeline.tasks.length; i++) {
-        const task = pipeline.tasks[i]!;
-        insertTask.run(
-          task.id, pipeline.id, task.name, task.agent_id, task.model,
-          task.approval, task.status, task.stage, task.input,
-          task.output, task.tokens, task.duration, i
-        );
-        for (const depId of task.depends_on) {
-          insertDep.run(task.id, depId);
-        }
-      }
-    }
   });
 
-  seedAll();
+  seedAgents();
 }

@@ -5,7 +5,16 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] — Unreleased
+## [1.0.1] — 2026-05-19
+
+### Fixed
+
+- Fresh installs no longer ship with two leftover demo pipelines ("SaaS
+  Landing Page" and "Blog Post: AI in Fraud") in the dashboard. The starter
+  crew of agents is still seeded on first run; the pipeline board now
+  opens empty.
+
+## [1.0.0] — 2026-05-19
 
 First public release.
 
@@ -78,4 +87,5 @@ First public release.
 - Coverage HTML report is not bundled — use `npm run test:coverage`
   locally.
 
+[1.0.1]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.1
 [1.0.0]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.0

@@ -1,6 +1,6 @@
 {
   "name": "@argustech/agentflow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI agent orchestration platform — pipeline-based task runner for Claude, Codex, and Gemini CLI agents with a visual dashboard and MCP server",
   "type": "module",
   "bin": {
