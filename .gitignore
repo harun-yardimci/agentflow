@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+.idea/
+.playwright-mcp/
+.claude/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/.encryption-key
+data/uploads/
+dist-server/
+
+# AgentFlow worktrees
+.agentflow/
+
+# Design tooling (kept locally, not part of the public source tree)
+*.pen
+agent-dashboard_2.jsx

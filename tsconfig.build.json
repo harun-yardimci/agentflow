@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.server.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist-server",
+    "rootDir": ".",
+    "noEmit": false,
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["server", "mcp"],
+  "exclude": [
+    "server/**/__tests__/**",
+    "tests/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}
