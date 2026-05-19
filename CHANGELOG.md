@@ -5,6 +5,22 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] — 2026-05-19
+
+### Added
+
+- Real AgentFlow favicon (`public/favicon.svg`) — orange dot on dark
+  surface, linked from `index.html`. Tabs and bookmarks now show the
+  brand icon instead of the default Vite logo.
+
+### Fixed
+
+- `/favicon.ico` requests redirect to `/favicon.svg` instead of 404,
+  killing the noisy log line every browser produced on first paint.
+- `/.well-known/appspecific/com.chrome.devtools.json` returns `{}` so
+  Chrome DevTools workspace probes stop logging 404s when devtools is
+  open against a local AgentFlow.
+
 ## [1.0.2] — 2026-05-19
 
 ### Fixed
@@ -100,6 +116,7 @@ First public release.
 - Coverage HTML report is not bundled — use `npm run test:coverage`
   locally.
 
+[1.0.3]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.3
 [1.0.2]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.2
 [1.0.1]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.1
 [1.0.0]: https://github.com/harun-yardimci/agentflow/releases/tag/v1.0.0

@@ -229,6 +229,18 @@ app.post('/mcp/messages', async (req, res) => {
 
 console.log('[AgentFlow MCP] Mounted on /mcp/sse');
 
+// ─── Quiet browser/devtools probes ───
+// Chrome auto-fetches /favicon.ico even when the page declares a <link rel="icon">.
+// Chrome DevTools probes /.well-known/appspecific/com.chrome.devtools.json on open.
+// Neither indicates a problem; serve empty/redirect replies so they don't show up
+// as 404s in the log.
+app.get('/favicon.ico', (_req, res) => {
+  res.redirect(301, '/favicon.svg');
+});
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (_req, res) => {
+  res.json({});
+});
+
 // ─── Static file serving (production) ───
 if (isProduction && existsSync(distPath)) {
   app.use(express.static(distPath));
