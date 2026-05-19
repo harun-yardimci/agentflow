@@ -65,7 +65,8 @@ jobs:
       - name: Pack tarball for release upload
         id: pack
         run: |
-          TARBALL=$(npm pack --silent)
+          # --ignore-scripts skips prepack (build already ran), so stdout is just the filename
+          TARBALL=$(npm pack --ignore-scripts --silent)
           echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
 
       - name: Attach tarball to GitHub Release
