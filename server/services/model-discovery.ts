@@ -67,6 +67,9 @@ function resolvePackageDir(binPath: string): string | null {
 
 // ─── Claude Discovery ───
 
+// Tiers that also expose their previous version as a `<tier>-legacy` model.
+const LEGACY_TIERS = new Set(['opus']);
+
 function discoverClaudeModels(): DiscoveredModel[] {
   const binPath = which('claude');
   if (!binPath) return [];
@@ -123,18 +126,30 @@ function discoverClaudeModels(): DiscoveredModel[] {
       return 0;
     });
 
-    const cliFlag = versions[0]!;
-
-    // Extract version for label (e.g. "4-6" → "4.6")
-    const versionPart = cliFlag.replace(`claude-${tier}-`, '').replace(/-/g, '.');
+    const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+    const baseOrder = sortMap[tier] ?? 10;
+    // "4-6" → "4.6"
+    const toVersion = (flag: string) => flag.replace(`claude-${tier}-`, '').replace(/-/g, '.');
 
     results.push({
       id: `claude:${tier}`,
       provider: 'claude',
-      label: `Claude ${tier.charAt(0).toUpperCase() + tier.slice(1)} ${versionPart}`,
-      cliFlag,
-      sortOrder: sortMap[tier] ?? 10,
+      label: `Claude ${tierLabel} ${toVersion(versions[0]!)}`,
+      cliFlag: versions[0]!,
+      sortOrder: baseOrder,
     });
+
+    // Expose the previous version as a "-legacy" tier (opus only for now) so it
+    // stays selectable instead of being dropped when a newer version ships.
+    if (LEGACY_TIERS.has(tier) && versions.length > 1) {
+      results.push({
+        id: `claude:${tier}-legacy`,
+        provider: 'claude',
+        label: `Claude ${tierLabel} ${toVersion(versions[1]!)} (Legacy)`,
+        cliFlag: versions[1]!,
+        sortOrder: baseOrder + 0.1,
+      });
+    }
   }
 
   return results;
@@ -354,14 +369,26 @@ async function discoverClaudeModelsViaApi(apiKey: string): Promise<DiscoveredMod
   for (const [tier, models] of tiers) {
     if (models.length === 0) continue;
     models.sort((a, b) => b.id.localeCompare(a.id));
+    const baseOrder = sortMap[tier] ?? 10;
     const top = models[0]!;
     results.push({
       id: `claude:${tier}`,
       provider: 'claude',
       label: top.displayName || `Claude ${tier}`,
       cliFlag: top.id,
-      sortOrder: sortMap[tier] ?? 10,
+      sortOrder: baseOrder,
     });
+
+    if (LEGACY_TIERS.has(tier) && models.length > 1) {
+      const prev = models[1]!;
+      results.push({
+        id: `claude:${tier}-legacy`,
+        provider: 'claude',
+        label: `${prev.displayName || `Claude ${tier}`} (Legacy)`,
+        cliFlag: prev.id,
+        sortOrder: baseOrder + 0.1,
+      });
+    }
   }
   return results;
 }
