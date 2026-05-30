@@ -714,6 +714,17 @@ export function createTables(db: Database.Database): void {
     UPDATE agents SET default_model = 'codex:codex-1' WHERE default_model = 'codex:gpt-4o';
   `);
 
+  // Migration: promote claude:opus to the latest version (4.8) on already-seeded
+  // databases. The opus-legacy tier (4.7) itself is added by the seed's
+  // INSERT OR IGNORE loop, which can't run here (providers aren't seeded yet, so a
+  // model INSERT would violate the provider foreign key). Guarded on the previous
+  // flag so it runs once and never clobbers a custom value.
+  db.exec(`
+    UPDATE models
+      SET cli_flag = 'claude-opus-4-8', label = 'Claude Opus 4.8'
+      WHERE id = 'claude:opus' AND cli_flag = 'claude-opus-4-7';
+  `);
+
   // ─── Attachments table ───
   db.exec(`
     CREATE TABLE IF NOT EXISTS attachments (
