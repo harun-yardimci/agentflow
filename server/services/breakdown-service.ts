@@ -267,6 +267,8 @@ function getRepairModel(model: string): string {
       return 'gemini:2.5-flash';
     case 'codex':
       return 'codex:o4-mini';
+    case 'antigravity':
+      return 'antigravity:gemini-3.5-flash';
     default:
       return model;
   }
@@ -290,7 +292,7 @@ Return ONLY valid JSON matching this schema:
     {
       "name": "string",
       "agentId": "string",
-      "model": "claude" | "gemini" | "codex",
+      "model": "claude" | "gemini" | "codex" | "antigravity",
       "approval": "auto" | "manual" | "on_error",
       "stage": 0,
       "dependsOn": [0],
@@ -485,6 +487,7 @@ ${agentList}
    - "claude" — best for reasoning, architecture, complex analysis
    - "gemini" — best for research, content writing, cost-effective bulk work
    - "codex" — best for code generation, technical implementation
+   - "antigravity" — Google's Antigravity (Gemini 3); successor to the Gemini CLI, good for research and content
 6. Set approval mode: "auto" for low-risk tasks, "manual" for critical/high-stakes tasks.
 7. Write clear input prompts for each task that reference what prior tasks will produce.
 8. Assign priority when relevant: "urgent", "high", "medium", "low", or null.
@@ -579,7 +582,7 @@ function parseBreakdownResponse(raw: string): BreakdownPlan {
   }
 
   // Validate each task
-  const validModels = ['claude', 'gemini', 'codex'];
+  const validModels = ['claude', 'gemini', 'codex', 'antigravity'];
   const validApprovals = ['auto', 'manual', 'on_error'];
 
   for (let i = 0; i < parsed.tasks.length; i++) {

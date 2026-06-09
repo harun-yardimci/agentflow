@@ -26,6 +26,7 @@ const AGENT_FILTERS: { label: string; value: AgentFilter }[] = [
   { label: 'Claude', value: 'claude' },
   { label: 'Gemini', value: 'gemini' },
   { label: 'Codex', value: 'codex' },
+  { label: 'Antigravity', value: 'antigravity' },
 ];
 
 function emptyMetrics(): AgentMetrics {

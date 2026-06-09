@@ -32,6 +32,8 @@
   --color-accent-red-bg: var(--accent-danger-bg);
   --color-accent-amber: var(--accent-warning);
   --color-accent-amber-bg: var(--accent-warning-bg);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-violet-bg: var(--accent-violet-bg);
   --color-accent-gray: var(--accent-neutral);
   --color-focus-ring: var(--focus-ring);
 
@@ -57,6 +59,7 @@
   --color-model-claude: var(--model-claude);
   --color-model-gemini: var(--model-gemini);
   --color-model-codex: var(--model-codex);
+  --color-model-antigravity: var(--model-antigravity);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -117,6 +120,8 @@
     --accent-warning-bg: #2a1e0b;
     --accent-danger: #ef4444;
     --accent-danger-bg: #2f1010;
+    --accent-violet: #8b5cf6;
+    --accent-violet-bg: #1a1130;
     --accent-neutral: #6b7280;
 
     --status-idle: #9ca3af;
@@ -129,6 +134,7 @@
     --model-claude: #f59e0b;
     --model-gemini: #3b82f6;
     --model-codex: #22c55e;
+    --model-antigravity: #8b5cf6;
 
     --focus-ring: rgb(245 158 11 / 0.35);
 
@@ -201,6 +207,8 @@
     --accent-warning-bg: #2a1e0b;
     --accent-danger: #ef4444;
     --accent-danger-bg: #2f1010;
+    --accent-violet: #8b5cf6;
+    --accent-violet-bg: #1a1130;
     --accent-neutral: #6b7280;
 
     --status-idle: #9ca3af;
@@ -213,6 +221,7 @@
     --model-claude: #f59e0b;
     --model-gemini: #3b82f6;
     --model-codex: #22c55e;
+    --model-antigravity: #8b5cf6;
 
     --focus-ring: rgb(245 158 11 / 0.35);
   }

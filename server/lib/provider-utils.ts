@@ -14,7 +14,7 @@ export function getProviderKey(model: string): string {
 
   // Fallback: parse from model string prefix (e.g. "claude:sonnet" → "claude")
   const prefix = model.split(':')[0];
-  if (prefix && ['claude', 'gemini', 'codex'].includes(prefix)) return prefix;
+  if (prefix && ['claude', 'gemini', 'codex', 'antigravity'].includes(prefix)) return prefix;
 
   // Fallback: match well-known model name patterns
   if (/^(gpt-|o[1-9]|codex)/i.test(model)) return 'codex';

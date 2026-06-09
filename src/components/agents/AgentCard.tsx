@@ -21,9 +21,10 @@ interface AgentCardProps {
   onQuickAssign?: (agentId: string, model: ModelKey) => void;
 }
 
-function modelTone(model: ModelKey): 'accent' | 'info' | 'success' {
+function modelTone(model: ModelKey): 'accent' | 'info' | 'success' | 'violet' {
   if (model === 'claude') return 'accent';
   if (model === 'gemini') return 'info';
+  if (model === 'antigravity' || model.startsWith('antigravity')) return 'violet';
   return 'success';
 }
 
@@ -100,7 +101,9 @@ export function AgentCard({
                     ? 'gemini'
                     : agent.defaultModel === 'gemini'
                       ? 'codex'
-                      : 'claude';
+                      : agent.defaultModel === 'codex'
+                        ? 'antigravity'
+                        : 'claude';
                 onQuickAssign(agent.id, nextModel);
               }}
               size="sm"

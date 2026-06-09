@@ -6,7 +6,7 @@
 [![Node.js Version](https://img.shields.io/node/v/@argustech/agentflow.svg)](https://nodejs.org)
 
 Pipeline-based orchestration for AI coding agents. Build multi-step task
-graphs, run them with Claude Code, Codex, or Gemini CLI, and monitor the
+graphs, run them with Claude Code, Codex, Gemini, or Antigravity CLI, and monitor the
 whole workflow from a visual dashboard or over MCP.
 
 ![AgentFlow pipeline board — five stages running across Claude, Codex, and Gemini side-by-side, each task in its own git worktree](docs/images/hero-pipeline-board.png)
@@ -23,7 +23,7 @@ You'll also need at least one supported AI CLI on your machine (see [Supported A
 
 ## Highlights
 
-- Multi-agent execution for Claude Code, Codex CLI, and Gemini CLI
+- Multi-agent execution for Claude Code, Codex CLI, Gemini CLI, and Antigravity CLI (`agy`)
 - Real-time dashboard for pipeline state, logs, outputs, and git diffs
 - MCP server for programmatic pipeline control from compatible clients
 - Git worktree isolation so tasks can run without stepping on each other
@@ -82,6 +82,9 @@ Install at least one of these tools before running pipelines:
 - Claude Code: `npm install -g @anthropic-ai/claude-code`
 - Codex CLI: `npm install -g @openai/codex`
 - Gemini CLI: `npm install -g @google/gemini-cli`
+- Antigravity CLI (`agy`): Google's successor to the Gemini CLI — see [antigravity.google](https://antigravity.google). The Gemini CLI stops serving free/Google One tiers on June 18, 2026; `agy` is the migration path.
+
+> **Antigravity note:** `agy` emits plain-text output only (no token/cost metrics), and this build's `--model` flag accepts only Google's backend-defined model ids — unrecognized values fall back to the account default. AgentFlow seeds the Gemini 3 family best-effort; model switching firms up as Google stabilizes those ids.
 
 ## Development Commands
 

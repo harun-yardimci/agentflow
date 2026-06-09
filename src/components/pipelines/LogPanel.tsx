@@ -55,7 +55,7 @@ function formatLogDateTime(time: string): { date: string; time: string } {
 }
 
 function splitHighlightedTokens(message: string): string[] {
-  return message.split(/(Claude|Gemini|Codex|claude|gemini|codex|\d+[\d,]*(?:\.\d+)?\s*(?:tokens?|ms|s|m))/g);
+  return message.split(/(Claude|Gemini|Codex|Antigravity|claude|gemini|codex|antigravity|\d+[\d,]*(?:\.\d+)?\s*(?:tokens?|ms|s|m))/g);
 }
 
 function messageTokenClass(token: string): string {
@@ -69,6 +69,9 @@ function messageTokenClass(token: string): string {
   }
   if (normalized.includes('codex')) {
     return 'text-model-codex';
+  }
+  if (normalized.includes('antigravity')) {
+    return 'text-model-antigravity';
   }
 
   if (/\d/.test(token)) {
