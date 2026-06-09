@@ -1,5 +1,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useModels } from '@/context/ModelContext';
+import { cn } from '@/lib/utils';
 import {
   Badge,
   Button,
@@ -9,7 +10,6 @@ import {
   CardHeader,
   Input,
   StatusDot,
-  ToggleSwitch,
 } from '@/components/ui';
 
 export interface ModelUsageStats {
@@ -235,32 +235,57 @@ export function ModelCard({
         </p>
 
         <div className="rounded-md border border-border-subtle bg-surface-0/60 px-2.5 py-2 space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-text-muted">
-                  Run via API
-                </span>
-                <span
-                  aria-label={MODE_HELP}
-                  className="cursor-help rounded-full border border-border-subtle px-1 font-mono text-[9px] text-text-muted hover:text-text-secondary"
-                  title={MODE_HELP}
-                >
-                  ?
-                </span>
-              </div>
-              <div className="mt-0.5 truncate font-mono text-[11px] text-text-secondary">
-                {isApi
-                  ? 'Uses provider SDK with your API key'
-                  : `Uses local \`${providerDef?.cliCommand ?? model}\` binary`}
-              </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-wide text-text-muted">
+                Execution mode
+              </span>
+              <span
+                aria-label={MODE_HELP}
+                className="cursor-help rounded-full border border-border-subtle px-1 font-mono text-[9px] text-text-muted hover:text-text-secondary"
+                title={MODE_HELP}
+              >
+                ?
+              </span>
             </div>
-            <ToggleSwitch
-              checked={isApi}
-              disabled={savingMode}
-              label="Run via API"
-              onChange={() => void handleToggleMode()}
-            />
+            <div
+              aria-label="Execution mode"
+              className="flex gap-0.5 rounded-md border border-border-subtle bg-surface-2 p-0.5"
+              role="group"
+            >
+              {(['cli', 'api'] as const).map((mode) => {
+                const active = isApi === (mode === 'api');
+                return (
+                  <button
+                    aria-pressed={active}
+                    className={cn(
+                      'flex-1 rounded px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-60',
+                      active
+                        ? 'text-text-primary'
+                        : 'text-text-muted hover:text-text-secondary',
+                    )}
+                    disabled={savingMode}
+                    key={mode}
+                    onClick={() => {
+                      if (!active) void handleToggleMode();
+                    }}
+                    style={
+                      active
+                        ? { backgroundColor: `${modelMeta.color}26`, boxShadow: `inset 0 0 0 1px ${modelMeta.color}` }
+                        : undefined
+                    }
+                    type="button"
+                  >
+                    {mode === 'api' ? 'API' : 'CLI'}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="font-mono text-[11px] text-text-secondary">
+              {isApi
+                ? 'Uses the provider SDK with your API key — no CLI needed.'
+                : `Runs the local \`${providerDef?.cliCommand ?? model}\` binary — no API key needed.`}
+            </p>
           </div>
 
           {isApi ? (
