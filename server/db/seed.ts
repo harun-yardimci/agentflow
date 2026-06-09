@@ -17,6 +17,7 @@ const PROVIDERS = [
   { id: 'claude', label: 'Claude', color: '#D97706', bg: '#1C1208', cli_command: 'claude', sort_order: 0 },
   { id: 'gemini', label: 'Gemini', color: '#3B82F6', bg: '#08111F', cli_command: 'gemini', sort_order: 1 },
   { id: 'codex',  label: 'Codex',  color: '#22C55E', bg: '#071710', cli_command: 'codex',  sort_order: 2 },
+  { id: 'antigravity', label: 'Antigravity', color: '#8B5CF6', bg: '#120A20', cli_command: 'agy', sort_order: 3 },
 ];
 
 const MODEL_DEFS = [
@@ -30,6 +31,12 @@ const MODEL_DEFS = [
   { id: 'codex:gpt-5.4', provider: 'codex', label: 'GPT 5.4',      color: '#22C55E', bg: '#071710', cost_per_1k: 0.010, cli_flag: 'gpt-5.4', sort_order: 1 },
   { id: 'codex:o4-mini',  provider: 'codex', label: 'o4 Mini',      color: '#22C55E', bg: '#071710', cost_per_1k: 0.005, cli_flag: 'o4-mini',  sort_order: 2 },
   { id: 'codex:o3',      provider: 'codex', label: 'o3',            color: '#22C55E', bg: '#071710', cost_per_1k: 0.020, cli_flag: 'o3',       sort_order: 3 },
+  // Antigravity (`agy`) exposes the Gemini 3 family. NOTE: this agy build's `--model`
+  // accepts only backend-defined model ids that aren't locally enumerable; unknown
+  // flags fall back silently to the account default (Gemini 3.5 Flash). These slugs
+  // are best-effort and degrade gracefully until Google stabilizes the `--model` ids.
+  { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.1-pro',   sort_order: 0 },
+  { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.5-flash', sort_order: 1 },
 ];
 
 const DEFAULT_SETTINGS = [

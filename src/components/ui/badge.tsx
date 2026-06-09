@@ -9,6 +9,7 @@ const BADGE_TONE_CLASSES = {
   info: 'border-accent-blue/35 bg-accent-blue-bg text-accent-blue',
   neutral: 'border-border-secondary bg-surface-2 text-text-secondary',
   success: 'border-accent-green/35 bg-accent-green-bg text-accent-green',
+  violet: 'border-accent-violet/35 bg-accent-violet-bg text-accent-violet',
   warning: 'border-accent-amber/35 bg-accent-amber-bg text-accent-amber',
 } as const;
 

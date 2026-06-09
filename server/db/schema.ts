@@ -48,7 +48,7 @@ function inferProviderFromModel(model: string | null): string | null {
   if (!model) return null;
 
   const prefix = model.split(':')[0];
-  if (prefix === 'claude' || prefix === 'gemini' || prefix === 'codex') {
+  if (prefix === 'claude' || prefix === 'gemini' || prefix === 'codex' || prefix === 'antigravity') {
     return prefix;
   }
 

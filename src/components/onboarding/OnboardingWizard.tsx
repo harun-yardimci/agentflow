@@ -9,6 +9,7 @@ interface ProviderStatus {
   claude: boolean;
   gemini: boolean;
   codex: boolean;
+  antigravity: boolean;
 }
 
 interface SetupFormData {
@@ -154,6 +155,7 @@ function ProviderStep({
     { key: 'claude', label: 'Claude CLI', desc: 'Anthropic Claude Code' },
     { key: 'gemini', label: 'Gemini CLI', desc: 'Google Gemini' },
     { key: 'codex', label: 'Codex CLI', desc: 'OpenAI Codex' },
+    { key: 'antigravity', label: 'Antigravity CLI', desc: 'Google Antigravity (agy)' },
   ];
 
   return (
@@ -261,7 +263,7 @@ function ProviderStep({
         })}
       </div>
 
-      {!detecting && !providers.claude && !providers.gemini && !providers.codex && (
+      {!detecting && !providers.claude && !providers.gemini && !providers.codex && !providers.antigravity && (
         <div className="mt-4 w-full max-w-sm rounded-lg border border-accent-orange/30 bg-accent-orange-bg px-4 py-3 text-center">
           <div className="font-mono text-[11px] font-semibold text-accent-orange">No providers detected</div>
           <p className="mt-1 font-mono text-[10px] leading-relaxed text-text-secondary">
@@ -270,7 +272,7 @@ function ProviderStep({
         </div>
       )}
 
-      {!detecting && (providers.claude || providers.gemini || providers.codex) && (
+      {!detecting && (providers.claude || providers.gemini || providers.codex || providers.antigravity) && (
         <p className="mt-4 max-w-sm text-center font-mono text-[10px] leading-relaxed text-text-dim">
           You can install missing providers later. AgentFlow will only use
           the models that have a corresponding CLI available.
@@ -374,6 +376,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     claude: false,
     gemini: false,
     codex: false,
+    antigravity: false,
   });
   const [detecting, setDetecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -390,6 +393,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         claude: result['claude'] ?? false,
         gemini: result['gemini'] ?? false,
         codex: result['codex'] ?? false,
+        antigravity: result['antigravity'] ?? false,
       });
     } catch (err) {
       console.error('Provider detection failed:', err);

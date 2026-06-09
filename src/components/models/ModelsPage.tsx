@@ -29,6 +29,7 @@ interface ProviderStatus {
   claude: boolean;
   codex: boolean;
   gemini: boolean;
+  antigravity: boolean;
 }
 
 interface ProviderMeta {
@@ -41,6 +42,7 @@ const PROVIDER_META: ProviderMeta[] = [
   { key: 'claude', label: 'Claude', cli: 'claude' },
   { key: 'gemini', label: 'Gemini', cli: 'gemini' },
   { key: 'codex', label: 'Codex', cli: 'codex' },
+  { key: 'antigravity', label: 'Antigravity', cli: 'agy' },
 ];
 
 function parseDurationSeconds(duration: string | null): number | null {
@@ -305,6 +307,7 @@ export function ModelsPage(): JSX.Element {
     claude: false,
     codex: false,
     gemini: false,
+    antigravity: false,
   });
   const [detecting, setDetecting] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -325,6 +328,7 @@ export function ModelsPage(): JSX.Element {
         claude: result.claude ?? false,
         codex: result.codex ?? false,
         gemini: result.gemini ?? false,
+        antigravity: result.antigravity ?? false,
       });
     } catch (detectError) {
       setError(toErrorMessage(detectError));
@@ -389,6 +393,7 @@ export function ModelsPage(): JSX.Element {
       claude: (settings.provider_claude_enabled ?? 'true') === 'true',
       codex: (settings.provider_codex_enabled ?? 'true') === 'true',
       gemini: (settings.provider_gemini_enabled ?? 'true') === 'true',
+      antigravity: (settings.provider_antigravity_enabled ?? 'true') === 'true',
     }),
     [settings],
   );

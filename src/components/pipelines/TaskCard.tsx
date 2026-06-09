@@ -33,9 +33,10 @@ function priorityToTone(priority: TaskPriority | null):
   return 'neutral';
 }
 
-function modelToTone(model: Task['model']): 'info' | 'success' | 'warning' {
+function modelToTone(model: Task['model']): 'info' | 'success' | 'warning' | 'violet' {
   if (model.startsWith('gemini')) return 'info';
   if (model.startsWith('codex')) return 'success';
+  if (model.startsWith('antigravity')) return 'violet';
   return 'warning';
 }
 

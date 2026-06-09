@@ -64,6 +64,7 @@ export class CLIExecutor implements BaseExecutor {
       attachmentFiles,
       additionalWorkspaceDirs,
       resumeSessionId: input.resumeSessionId,
+      printTimeoutMs: isInteractive ? undefined : input.timeoutMs,
     });
 
     const startTime = Date.now();

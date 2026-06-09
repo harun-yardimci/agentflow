@@ -331,6 +331,25 @@ function discoverGeminiModels(): DiscoveredModel[] {
   return results;
 }
 
+// ─── Antigravity Discovery ───
+
+// agy's `models` subcommand needs a TTY and its backend-defined model ids are not
+// locally enumerable, so discovery is presence-based: if the binary is installed we
+// report the known Gemini 3 family; if not, we return nothing so the empty-result
+// guard in discoverModels() skips the sync and the seeded defaults are preserved.
+function discoverAntigravityModels(): DiscoveredModel[] {
+  if (!which('agy')) return [];
+  return [
+    { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   cliFlag: 'gemini-3.1-pro',   sortOrder: 0 },
+    { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', cliFlag: 'gemini-3.5-flash', sortOrder: 1 },
+  ];
+}
+
+async function discoverAntigravityModelsViaApi(_apiKey: string): Promise<DiscoveredModel[]> {
+  // agy is CLI-only — no public API/SDK to enumerate models from.
+  return [];
+}
+
 // ─── Provider registry ───
 
 interface ProviderDiscoveryConfig {
@@ -343,6 +362,7 @@ const PROVIDER_CONFIGS: ProviderDiscoveryConfig[] = [
   { id: 'claude', discover: discoverClaudeModels, discoverViaApi: discoverClaudeModelsViaApi },
   { id: 'codex', discover: discoverCodexModels, discoverViaApi: discoverCodexModelsViaApi },
   { id: 'gemini', discover: discoverGeminiModels, discoverViaApi: discoverGeminiModelsViaApi },
+  { id: 'antigravity', discover: discoverAntigravityModels, discoverViaApi: discoverAntigravityModelsViaApi },
 ];
 
 // ─── API-based discovery ───

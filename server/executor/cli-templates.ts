@@ -78,6 +78,27 @@ export const CLI_TEMPLATES: Record<string, CLITemplate> = {
     resumeFlag: null, // codex resume requires TTY — not supported in headless execution
     sessionIdPattern: '"thread_id"\\s*:\\s*"([^"]+)"',
   },
+  // Antigravity CLI (`agy`) — Google's successor to the Gemini CLI. Built in Go,
+  // headless via `--print`. It emits plain text only (no JSON output format), so
+  // there is no token/cost metadata to extract.
+  antigravity: {
+    command: 'agy',
+    args: ['--print', '{{prompt}}'],
+    useStdin: false,
+    skipPermissionFlag: '--dangerously-skip-permissions',
+    quietFlag: null,
+    outputFormatFlag: null, // no JSON output flag — agy prints plain text
+    defaultOutputFormat: 'text',
+    tokenPattern: null,
+    interactiveFlag: null, // agy interactive mode lacks AgentFlow's stdio control protocol
+    imageFlag: null,
+    fileFlag: null, // no attachment flag — agents read files from the cwd
+    extraDirFlag: '--add-dir',
+    resumeFlag: '--conversation',
+    // Headless `--print` mode does not echo the conversation id to stdout yet
+    // (upstream google-antigravity/antigravity-cli#7), so resume-by-id is inert.
+    sessionIdPattern: null,
+  },
 };
 
 /** Build the full args array for a CLI invocation */
@@ -96,6 +117,8 @@ export function buildCliArgs(
     attachmentFiles?: string[];
     additionalWorkspaceDirs?: string[];
     resumeSessionId?: string;
+    /** Task timeout (ms) — used to align agy's own --print-timeout with the task budget */
+    printTimeoutMs?: number;
   }
 ): string[] {
   const args: string[] = [];
@@ -139,6 +162,12 @@ export function buildCliArgs(
   // Codex: --json is a boolean flag (no value argument), but not supported on `resume` subcommand
   if (template.command === 'codex' && !options.resumeSessionId && (outputFormat === 'json' || outputFormat === 'stream-json')) {
     args.push('--json');
+  }
+
+  // Antigravity: `agy --print` has its own 5-minute timeout that would cut long
+  // tasks short. Align it with the task budget (Go duration string, e.g. "1800s").
+  if (template.command === 'agy' && options.printTimeoutMs && options.printTimeoutMs > 0) {
+    args.push('--print-timeout', `${Math.ceil(options.printTimeoutMs / 1000)}s`);
   }
 
   if (template.extraDirFlag && options.additionalWorkspaceDirs?.length) {
