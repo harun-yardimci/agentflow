@@ -83,7 +83,7 @@ function discoverClaudeModels(): DiscoveredModel[] {
   // Fall back to scanning the binary directly (native Mach-O / single-file installs).
   if (!raw) {
     const realPath = exec(`realpath "${binPath}" 2>/dev/null`) || binPath;
-    raw = exec(`strings "${realPath}" 2>/dev/null | grep -oE 'claude-(opus|sonnet|haiku)-[0-9][0-9a-z.-]*' | sort -u`);
+    raw = exec(`strings "${realPath}" 2>/dev/null | grep -oE 'claude-(fable|opus|sonnet|haiku)-[0-9][0-9a-z.-]*' | sort -u`);
   }
   if (!raw) return [];
 
@@ -92,7 +92,7 @@ function discoverClaudeModels(): DiscoveredModel[] {
   // Filter to actual model IDs
   // Valid: claude-opus-4-6, claude-sonnet-4-5, claude-haiku-4
   // Skip dated: claude-opus-4-20250514, claude-sonnet-4-5-20250929
-  const modelPattern = /^claude-(opus|sonnet|haiku)-(\d+(?:-\d+)?)$/;
+  const modelPattern = /^claude-(fable|opus|sonnet|haiku)-(\d+(?:-\d+)?)$/;
   const datedPattern = /\d{8}$/; // Ends with 8-digit date
 
   // Group by tier, collect only non-dated versions
@@ -108,7 +108,7 @@ function discoverClaudeModels(): DiscoveredModel[] {
     tiers.set(tier, existing);
   }
 
-  const sortMap: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
+  const sortMap: Record<string, number> = { fable: 0, opus: 1, sonnet: 2, haiku: 3 };
   const results: DiscoveredModel[] = [];
 
   for (const [tier, versions] of tiers) {
@@ -375,7 +375,7 @@ async function discoverClaudeModelsViaApi(apiKey: string): Promise<DiscoveredMod
 
   const tiers = new Map<string, { id: string; displayName: string }[]>();
   for (const item of items) {
-    const m = item.id.match(/^claude-(opus|sonnet|haiku)/);
+    const m = item.id.match(/^claude-(fable|opus|sonnet|haiku)/);
     if (!m) continue;
     const tier = m[1]!;
     const existing = tiers.get(tier) ?? [];
@@ -383,7 +383,7 @@ async function discoverClaudeModelsViaApi(apiKey: string): Promise<DiscoveredMod
     tiers.set(tier, existing);
   }
 
-  const sortMap: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
+  const sortMap: Record<string, number> = { fable: 0, opus: 1, sonnet: 2, haiku: 3 };
   const results: DiscoveredModel[] = [];
 
   for (const [tier, models] of tiers) {
