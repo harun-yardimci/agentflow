@@ -21,10 +21,13 @@ const PROVIDERS = [
 ];
 
 const MODEL_DEFS = [
-  { id: 'claude:sonnet', provider: 'claude', label: 'Claude Sonnet', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.015, cli_flag: 'claude-sonnet-4-6',           sort_order: 0 },
-  { id: 'claude:opus',        provider: 'claude', label: 'Claude Opus 4.8',          color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-8',           sort_order: 1 },
-  { id: 'claude:opus-legacy', provider: 'claude', label: 'Claude Opus 4.7 (Legacy)', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-7',           sort_order: 2 },
-  { id: 'claude:haiku',       provider: 'claude', label: 'Claude Haiku',             color: '#D97706', bg: '#1C1208', cost_per_1k: 0.001, cli_flag: 'claude-haiku-4-5-20251001', sort_order: 3 },
+  // Fable 5 is the flagship tier — sits above Opus, for the hardest problems.
+  // Announced pricing: $10 / 1M input, $50 / 1M output.
+  { id: 'claude:fable',       provider: 'claude', label: 'Claude Fable 5',           color: '#D97706', bg: '#1C1208', cost_per_1k: 0.050, cli_flag: 'claude-fable-5',           sort_order: 0 },
+  { id: 'claude:sonnet', provider: 'claude', label: 'Claude Sonnet', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.015, cli_flag: 'claude-sonnet-4-6',           sort_order: 1 },
+  { id: 'claude:opus',        provider: 'claude', label: 'Claude Opus 4.8',          color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-8',           sort_order: 2 },
+  { id: 'claude:opus-legacy', provider: 'claude', label: 'Claude Opus 4.7 (Legacy)', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-7',           sort_order: 3 },
+  { id: 'claude:haiku',       provider: 'claude', label: 'Claude Haiku',             color: '#D97706', bg: '#1C1208', cost_per_1k: 0.001, cli_flag: 'claude-haiku-4-5-20251001', sort_order: 4 },
   { id: 'gemini:2.5-pro',  provider: 'gemini', label: 'Gemini 2.5 Pro',  color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.00125, cli_flag: 'gemini-2.5-pro',   sort_order: 0 },
   { id: 'gemini:2.5-flash', provider: 'gemini', label: 'Gemini 2.5 Flash', color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.0003, cli_flag: 'gemini-2.5-flash', sort_order: 1 },
   { id: 'codex:codex-1',  provider: 'codex', label: 'Codex 1',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.020, cli_flag: 'codex-1',  sort_order: 0 },
