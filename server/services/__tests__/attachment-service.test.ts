@@ -22,7 +22,7 @@ vi.mock('../../db/connection.js', () => ({
 }));
 
 // Dynamic import so the mock is in place first
-const { isTextMime, getTextContent } = await import('../attachment-service.js');
+const { isTextMime, getTextContent, sanitizeAttachmentName, formatFileReference } = await import('../attachment-service.js');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PIPELINE_ID = 'p-content-qa';
@@ -276,5 +276,37 @@ describe('getTextContent()', () => {
     expect(caughtErr).toBeDefined();
     expect((caughtErr as { statusCode: number }).statusCode).toBe(404);
     expect((caughtErr as Error).message).toMatch(/not found/i);
+  });
+});
+
+// ─── Path-traversal sanitization ───────────────────────────────────────────────
+describe('sanitizeAttachmentName', () => {
+  it('strips parent-directory traversal sequences', () => {
+    expect(sanitizeAttachmentName('../../.git/hooks/pre-commit')).toBe('pre-commit');
+    expect(sanitizeAttachmentName('../../../etc/passwd')).toBe('passwd');
+  });
+
+  it('strips absolute path components', () => {
+    expect(sanitizeAttachmentName('/etc/passwd')).toBe('passwd');
+    expect(sanitizeAttachmentName('C:\\Windows\\system32\\evil.exe')).toBe('evil.exe');
+  });
+
+  it('drops leading dots so it cannot create dotfiles', () => {
+    expect(sanitizeAttachmentName('...env')).toBe('env');
+  });
+
+  it('falls back to a safe default when nothing usable remains', () => {
+    expect(sanitizeAttachmentName('../')).toBe('attachment');
+    expect(sanitizeAttachmentName('/')).toBe('attachment');
+  });
+
+  it('preserves ordinary filenames untouched', () => {
+    expect(sanitizeAttachmentName('report.pdf')).toBe('report.pdf');
+    expect(sanitizeAttachmentName('my notes v2.md')).toBe('my notes v2.md');
+  });
+
+  it('keeps file references inside .attachments/ even for hostile names', () => {
+    expect(formatFileReference('../../escape.txt', 'claude')).toBe('.attachments/escape.txt');
+    expect(formatFileReference('../../escape.txt', 'gemini')).toBe('@.attachments/escape.txt');
   });
 });
