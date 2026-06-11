@@ -4,7 +4,7 @@
   "description": "AI agent orchestration platform — pipeline-based task runner for Claude, Codex, Gemini, and Antigravity CLI agents with a visual dashboard and MCP server",
   "type": "module",
   "bin": {
-    "agentflow": "./bin/cli.js"
+    "agentflow": "bin/cli.js"
   },
   "files": [
     "bin/",
@@ -45,7 +45,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/harun-yardimci/agentflow.git"
+    "url": "git+https://github.com/harun-yardimci/agentflow.git"
   },
   "homepage": "https://github.com/harun-yardimci/agentflow#readme",
   "bugs": {
