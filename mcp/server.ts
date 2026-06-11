@@ -27,7 +27,7 @@ const API_BASE = `http://127.0.0.1:${resolveApiPort()}/api`;
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: 'agentflow',
-    version: '1.0.0',
+    version: '1.1.2',
   });
 
   // ─── Pipeline Tools ───
