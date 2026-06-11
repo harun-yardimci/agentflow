@@ -20,7 +20,9 @@ function resolveApiPort(): number {
   if (process.env.AGENTFLOW_PORT) return parseInt(process.env.AGENTFLOW_PORT, 10);
   return resolveApiPortForDev();
 }
-const API_BASE = `http://localhost:${resolveApiPort()}/api`;
+// Use 127.0.0.1 (not "localhost") to match the backend's loopback bind — on
+// IPv6-first hosts "localhost" can resolve to ::1 and miss the IPv4-only listener.
+const API_BASE = `http://127.0.0.1:${resolveApiPort()}/api`;
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({

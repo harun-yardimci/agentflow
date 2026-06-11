@@ -42,7 +42,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = resolvePackageRoot(import.meta.url);
 const distPath = join(PACKAGE_ROOT, 'dist');
 
-app.use(cors());
+// Restrict CORS to loopback origins. The dashboard is served same-origin (prod)
+// or proxied server-side by Vite (dev), so cross-origin browser requests should
+// only ever come from localhost. A wildcard here would let any website the user
+// visits drive the API (CSRF), which — combined with task execution — is unsafe.
+app.use(cors({
+  origin: (origin, cb) => {
+    // Same-origin / non-browser requests (curl, MCP) send no Origin header.
+    if (!origin) return cb(null, true);
+    const ok = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin);
+    cb(ok ? null : new Error('Not allowed by CORS'), ok);
+  },
+}));
 app.use(express.json());
 
 // Initialize database
@@ -262,8 +273,12 @@ app.use(errorHandler);
 
 let httpServer: ReturnType<typeof app.listen> | null = null;
 
+// Bind to loopback by default so the API (which can execute CLI agents) isn't
+// exposed to the local network. Set AGENTFLOW_HOST=0.0.0.0 to opt into LAN access.
+const HOST = process.env.AGENTFLOW_HOST?.trim() || '127.0.0.1';
+
 function startServer(port: number): void {
-  const server = app.listen(port, () => {
+  const server = app.listen(port, HOST, () => {
     httpServer = server;
     // Persist the app port (what the user visits) so MCP config stays in sync
     db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('port', String(APP_PORT));

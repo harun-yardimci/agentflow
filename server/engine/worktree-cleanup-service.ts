@@ -1,9 +1,14 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { getDb } from '../db/connection.js';
 import { logTimestamp } from '../lib/log-timestamp.js';
 import { getGitRoot, hasChanges, removeWorktree } from './worktree-manager.js';
+
+/** Run a command with argv array (no shell) to avoid injection via refs/args. */
+function run(command: string, args: string[], cwd?: string): string {
+  return execFileSync(command, args, { cwd, stdio: 'pipe' }).toString();
+}
 
 const DEFAULT_RETENTION_DAYS = 5;
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -51,10 +56,7 @@ interface OneTimeNotMergedCleanupResult {
 
 function getMainBranch(cwd: string): string {
   try {
-    const branches = execSync('git branch --list main master', {
-      cwd,
-      stdio: 'pipe',
-    }).toString().trim();
+    const branches = run('git', ['branch', '--list', 'main', 'master'], cwd).trim();
     if (branches.includes('main')) return 'main';
     if (branches.includes('master')) return 'master';
   } catch {
@@ -83,10 +85,7 @@ function isPastRetention(archivedAt: string | null, nowMs: number): boolean {
 
 function isBranchMerged(gitRoot: string, mainBranch: string, taskBranch: string): boolean {
   try {
-    const merged = execSync(`git branch --merged "${mainBranch}"`, {
-      cwd: gitRoot,
-      stdio: 'pipe',
-    }).toString();
+    const merged = run('git', ['branch', '--merged', mainBranch], gitRoot);
 
     return merged
       .split('\n')
@@ -109,21 +108,13 @@ function logPipelineEvent(
 
 function removeWorktreeByPath(projectDir: string, worktreePath: string): void {
   const gitRoot = getGitRoot(projectDir);
-  execSync(`git worktree remove "${worktreePath}" --force`, {
-    cwd: gitRoot,
-    stdio: 'pipe',
-  });
-  execSync('git worktree prune', {
-    cwd: gitRoot,
-    stdio: 'pipe',
-  });
+  run('git', ['worktree', 'remove', worktreePath, '--force'], gitRoot);
+  run('git', ['worktree', 'prune'], gitRoot);
 }
 
 function listTaskDockerImages(taskId: string): string[] {
   try {
-    const output = execSync('docker image ls --format "{{.Repository}}:{{.Tag}}"', {
-      stdio: 'pipe',
-    }).toString();
+    const output = run('docker', ['image', 'ls', '--format', '{{.Repository}}:{{.Tag}}']);
     const prefix = `task-${taskId}-`;
 
     return output
@@ -139,10 +130,7 @@ function listTaskDockerImages(taskId: string): string[] {
 
 function taskDockerImageHasContainers(imageRef: string): boolean {
   try {
-    const output = execSync(
-      `docker ps -a --filter "ancestor=${imageRef}" -q`,
-      { stdio: 'pipe' },
-    ).toString().trim();
+    const output = run('docker', ['ps', '-a', '--filter', `ancestor=${imageRef}`, '-q']).trim();
 
     return output.length > 0;
   } catch {
@@ -160,9 +148,7 @@ function cleanupTaskDockerImagesNow(taskId: string): number {
     }
 
     try {
-      execSync(`docker image rm "${imageRef}"`, {
-        stdio: 'pipe',
-      });
+      run('docker', ['image', 'rm', imageRef]);
       removed += 1;
     } catch {
       // Best effort cleanup only.
