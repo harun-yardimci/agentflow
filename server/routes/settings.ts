@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { UpdateSettingsSchema } from '../types/api.js';
 import { getDb } from '../db/connection.js';
-import { SENSITIVE_KEYS, encrypt, decrypt, maskValue, isMaskedValue } from '../lib/crypto.js';
+import { SENSITIVE_KEYS, encrypt, maskValue, isMaskedValue } from '../lib/crypto.js';
 
 const router = Router();
 
@@ -67,22 +67,8 @@ router.put('/', validate(UpdateSettingsSchema), (req, res) => {
   res.json(serializeSettings(rows));
 });
 
-/** GET /api/settings/decrypt/:key — internal: get decrypted value (for executor use) */
-router.get('/decrypt/:key', (req, res) => {
-  const { key } = req.params;
-  if (!SENSITIVE_KEYS.has(key as string)) {
-    res.status(400).json({ error: 'Not a sensitive key' });
-    return;
-  }
-
-  const db = getDb();
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
-  if (!row || !row.value) {
-    res.status(404).json({ error: 'Key not found or empty' });
-    return;
-  }
-
-  res.json({ key, value: decrypt(row.value) });
-});
+// NOTE: A `GET /decrypt/:key` endpoint that returned plaintext secrets over
+// HTTP used to live here. It was unused (executors read secrets directly via
+// the crypto lib) and an unauthenticated exfiltration vector, so it was removed.
 
 export default router;

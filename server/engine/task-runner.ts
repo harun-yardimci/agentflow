@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import { getDb } from '../db/connection.js';
 import { logTimestamp } from '../lib/log-timestamp.js';
@@ -718,13 +718,13 @@ function resolveWorkingDir(taskId: string, pipelineId: string): string {
         let baseSha: string | null = null;
         let branchSha: string | null = null;
         try {
-          baseSha = execSync('git rev-parse HEAD', {
+          baseSha = execFileSync('git', ['rev-parse', 'HEAD'], {
             cwd: worktree.path,
             stdio: 'pipe',
           }).toString().trim();
         } catch { /* leave null */ }
         try {
-          branchSha = execSync(`git rev-parse --verify "${depBranches[i]!}"`, {
+          branchSha = execFileSync('git', ['rev-parse', '--verify', depBranches[i]!], {
             cwd: projectDir,
             stdio: 'pipe',
           }).toString().trim();
@@ -2602,7 +2602,7 @@ export function finalizeMergeFixerTask(fixerTaskId: string): void {
 
 function detectDefaultBranch(projectDir: string): string {
   try {
-    const out = execSync('git branch --list main master', {
+    const out = execFileSync('git', ['branch', '--list', 'main', 'master'], {
       cwd: projectDir,
       stdio: 'pipe',
     }).toString();
