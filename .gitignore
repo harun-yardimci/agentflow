@@ -8,6 +8,7 @@ dist/
 .idea/
 .playwright-mcp/
 .claude/
+.antigravitycli/
 data/*.db
 data/*.db-wal
 data/*.db-shm
