@@ -5,6 +5,32 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] — 2026-06-11
+
+### Security
+
+- **Attachment path traversal → arbitrary file write.** An uploaded file's
+  original name was used unsanitized as a path when copying into a task's
+  `.attachments/` directory, so a name like `../../.git/hooks/pre-commit`
+  could write outside the worktree (a route to code execution). Names are now
+  sanitized at save, copy, and reference-formatting boundaries.
+- **Git command injection.** Branch names and refs (settable via the API,
+  pipeline base branch, and task dependencies) were interpolated into shell
+  strings passed to `execSync`. All git/docker invocations reachable from the
+  API now use `execFileSync` with argv arrays — no shell, no injection.
+- **Network exposure.** The server bound to all interfaces with wildcard CORS
+  and no auth. It now binds `127.0.0.1` by default (set `AGENTFLOW_HOST` to
+  opt into LAN access) and restricts CORS to loopback origins, closing the
+  CSRF-to-task-execution chain.
+- **Removed** the unused `GET /api/settings/decrypt/:key` endpoint, which
+  returned plaintext secrets over HTTP — an unauthenticated exfiltration
+  vector with no callers (executors read secrets directly via the crypto lib).
+
+### Fixed
+
+- MCP server's HTTP client now targets `127.0.0.1` (not `localhost`) to match
+  the backend's loopback bind, avoiding an IPv6-resolution miss on some hosts.
+
 ## [1.0.3] — 2026-05-19
 
 ### Added
