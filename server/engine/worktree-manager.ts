@@ -1,6 +1,18 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, symlinkSync } from 'fs';
 import { join, resolve } from 'path';
+
+/**
+ * Run git with arguments as an argv array (never a shell string) so branch
+ * names / refs derived from user input can't inject shell commands.
+ */
+function git(args: string[], opts: { cwd: string; maxBuffer?: number }): string {
+  return execFileSync('git', args, {
+    cwd: opts.cwd,
+    stdio: 'pipe',
+    maxBuffer: opts.maxBuffer,
+  }).toString();
+}
 
 export interface WorktreeInfo {
   path: string;
@@ -20,7 +32,7 @@ const TEMP_WORKTREE_DIR = '.agentflow/temp-worktrees';
 /** Check if we're in a git repo */
 function isGitRepo(dir: string): boolean {
   try {
-    execSync('git rev-parse --is-inside-work-tree', { cwd: dir, stdio: 'pipe' });
+    git(['rev-parse', '--is-inside-work-tree'], { cwd: dir });
     return true;
   } catch {
     return false;
@@ -30,7 +42,7 @@ function isGitRepo(dir: string): boolean {
 /** Get the git root directory */
 export function getGitRoot(dir: string): string {
   try {
-    return execSync('git rev-parse --show-toplevel', { cwd: dir, stdio: 'pipe' }).toString().trim();
+    return git(['rev-parse', '--show-toplevel'], { cwd: dir }).trim();
   } catch {
     return dir;
   }
@@ -39,14 +51,12 @@ export function getGitRoot(dir: string): string {
 /** Ensure git repo is initialized with at least one commit */
 function ensureGitRepo(gitRoot: string): void {
   if (!isGitRepo(gitRoot)) {
-    execSync('git init', { cwd: gitRoot, stdio: 'pipe' });
+    git(['init'], { cwd: gitRoot });
     try {
-      execSync('git log --oneline -1', { cwd: gitRoot, stdio: 'pipe' });
+      git(['log', '--oneline', '-1'], { cwd: gitRoot });
     } catch {
-      execSync('git add -A && git commit -m "initial commit" --allow-empty', {
-        cwd: gitRoot,
-        stdio: 'pipe',
-      });
+      git(['add', '-A'], { cwd: gitRoot });
+      git(['commit', '-m', 'initial commit', '--allow-empty'], { cwd: gitRoot });
     }
   }
 }
@@ -77,13 +87,13 @@ function prepareWorktreeSlot(taskId: string, gitRoot: string): { branchName: str
   // Clean up stale worktree if it exists
   if (existsSync(worktreePath)) {
     try {
-      execSync(`git worktree remove "${worktreePath}" --force`, { cwd: gitRoot, stdio: 'pipe' });
+      git(['worktree', 'remove', worktreePath, '--force'], { cwd: gitRoot });
     } catch { /* might be stale */ }
   }
 
   // Delete stale branch
   try {
-    execSync(`git branch -D "${branchName}"`, { cwd: gitRoot, stdio: 'pipe' });
+    git(['branch', '-D', branchName], { cwd: gitRoot });
   } catch { /* didn't exist */ }
 
   return { branchName, worktreePath, worktreeBase };
@@ -105,9 +115,8 @@ export function createWorktreeFromRef(taskId: string, projectDir: string, baseRe
 
   const { branchName, worktreePath } = prepareWorktreeSlot(taskId, gitRoot);
 
-  execSync(`git worktree add -b "${branchName}" "${worktreePath}" "${baseRef}"`, {
+  git(['worktree', 'add', '-b', branchName, worktreePath, baseRef], {
     cwd: gitRoot,
-    stdio: 'pipe',
   });
 
   // Symlink node_modules from main project so CLI agents can resolve dependencies
@@ -125,13 +134,11 @@ export function branchHasCommits(
   const gitRoot = getGitRoot(projectDir);
   try {
     // Check branch exists
-    const exists = execSync(`git branch --list "${branch}"`, { cwd: gitRoot, stdio: 'pipe' })
-      .toString().trim();
+    const exists = git(['branch', '--list', branch], { cwd: gitRoot }).trim();
     if (!exists) return false;
 
     // Check if branch has commits ahead of the selected base ref
-    const log = execSync(`git log "${baseRef}".."${branch}" --oneline -1`, { cwd: gitRoot, stdio: 'pipe' })
-      .toString().trim();
+    const log = git(['log', `${baseRef}..${branch}`, '--oneline', '-1'], { cwd: gitRoot }).trim();
     return log.length > 0;
   } catch {
     return false;
@@ -144,10 +151,7 @@ function parseWorktreeBlocks(
   const gitRoot = getGitRoot(projectDir);
 
   try {
-    const output = execSync('git worktree list --porcelain', {
-      cwd: gitRoot,
-      stdio: 'pipe',
-    }).toString();
+    const output = git(['worktree', 'list', '--porcelain'], { cwd: gitRoot });
 
     return output
       .split('\n\n')
@@ -209,10 +213,7 @@ export function createTempWorktreeFromRef(
     `${safeLabel}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   );
 
-  execSync(`git worktree add "${tempPath}" "${ref}"`, {
-    cwd: gitRoot,
-    stdio: 'pipe',
-  });
+  git(['worktree', 'add', tempPath, ref], { cwd: gitRoot });
 
   symlinkNodeModules(gitRoot, tempPath);
 
@@ -221,16 +222,13 @@ export function createTempWorktreeFromRef(
     ref,
     cleanup: () => {
       try {
-        execSync(`git worktree remove "${tempPath}" --force`, {
-          cwd: gitRoot,
-          stdio: 'pipe',
-        });
+        git(['worktree', 'remove', tempPath, '--force'], { cwd: gitRoot });
       } catch {
         // Best effort
       }
 
       try {
-        execSync('git worktree prune', { cwd: gitRoot, stdio: 'pipe' });
+        git(['worktree', 'prune'], { cwd: gitRoot });
       } catch {
         // Best effort
       }
@@ -249,25 +247,23 @@ export interface MergeResult {
 /** Merge a branch into the current worktree. Aborts on conflict. */
 export function mergeBranch(worktreePath: string, branch: string): MergeResult {
   try {
-    execSync(`git merge "${branch}" --no-edit -m "Merge ${branch} for pipeline"`, {
+    git(['merge', branch, '--no-edit', '-m', `Merge ${branch} for pipeline`], {
       cwd: worktreePath,
-      stdio: 'pipe',
     });
     return { ok: true, branch };
   } catch (err) {
     // Merge failed — likely conflict
     let conflictFiles: string[] = [];
     try {
-      const output = execSync('git diff --name-only --diff-filter=U', {
+      const output = git(['diff', '--name-only', '--diff-filter=U'], {
         cwd: worktreePath,
-        stdio: 'pipe',
-      }).toString().trim();
+      }).trim();
       conflictFiles = output.split('\n').filter(Boolean);
     } catch { /* best effort */ }
 
     // Abort the failed merge to leave worktree clean
     try {
-      execSync('git merge --abort', { cwd: worktreePath, stdio: 'pipe' });
+      git(['merge', '--abort'], { cwd: worktreePath });
     } catch { /* might not be in merge state */ }
 
     return {
@@ -310,29 +306,25 @@ export function finalizeTempMergeWorktree(
   const gitRoot = getGitRoot(projectDir);
 
   try {
-    const fixerHead = execSync('git rev-parse HEAD', {
+    const fixerHead = git(['rev-parse', 'HEAD'], {
       cwd: fixerWorktreePath,
-      stdio: 'pipe',
-    }).toString().trim();
+    }).trim();
 
-    const parentLine = execSync('git rev-list --parents -n 1 HEAD', {
+    const parentLine = git(['rev-list', '--parents', '-n', '1', 'HEAD'], {
       cwd: fixerWorktreePath,
-      stdio: 'pipe',
-    }).toString().trim();
+    }).trim();
     const parents = parentLine.split(' ').slice(1);
     if (parents.length < 2) {
       return { ok: false, reason: 'not_merge_commit', commit: fixerHead };
     }
 
-    const baseTip = execSync(`git rev-parse --verify "${baseBranch}"`, {
+    const baseTip = git(['rev-parse', '--verify', baseBranch], {
       cwd: gitRoot,
-      stdio: 'pipe',
-    }).toString().trim();
+    }).trim();
 
     try {
-      execSync(`git merge-base --is-ancestor "${baseTip}" "${fixerHead}"`, {
+      git(['merge-base', '--is-ancestor', baseTip, fixerHead], {
         cwd: gitRoot,
-        stdio: 'pipe',
       });
     } catch {
       return { ok: false, reason: 'not_fast_forward', commit: fixerHead };
@@ -341,15 +333,14 @@ export function finalizeTempMergeWorktree(
     const checkoutPaths = getCheckoutPathsForBranch(projectDir, baseBranch);
     if (checkoutPaths.length > 0) {
       for (const checkoutPath of checkoutPaths) {
-        execSync(`git merge --ff-only "${fixerHead}"`, {
+        git(['merge', '--ff-only', fixerHead], {
           cwd: checkoutPath,
-          stdio: 'pipe',
         });
       }
     } else {
-      execSync(
-        `git update-ref "refs/heads/${baseBranch}" "${fixerHead}" "${baseTip}"`,
-        { cwd: gitRoot, stdio: 'pipe' },
+      git(
+        ['update-ref', `refs/heads/${baseBranch}`, fixerHead, baseTip],
+        { cwd: gitRoot },
       );
     }
 
@@ -367,24 +358,18 @@ export function finalizeTempMergeWorktree(
 export function cleanupTempWorktree(projectDir: string, tempWorktreePath: string): void {
   const gitRoot = getGitRoot(projectDir);
   try {
-    execSync(`git worktree remove "${tempWorktreePath}" --force`, {
-      cwd: gitRoot,
-      stdio: 'pipe',
-    });
+    git(['worktree', 'remove', tempWorktreePath, '--force'], { cwd: gitRoot });
   } catch { /* best effort */ }
   try {
-    execSync('git worktree prune', { cwd: gitRoot, stdio: 'pipe' });
+    git(['worktree', 'prune'], { cwd: gitRoot });
   } catch { /* best effort */ }
 }
 
 /** Commit a resolved merge (used by fixer tasks after resolving conflicts) */
 export function commitMergeResolution(worktreePath: string, message: string): boolean {
   try {
-    execSync('git add -A', { cwd: worktreePath, stdio: 'pipe' });
-    execSync(`git commit --no-edit -m "${message.replace(/"/g, '\\"')}"`, {
-      cwd: worktreePath,
-      stdio: 'pipe',
-    });
+    git(['add', '-A'], { cwd: worktreePath });
+    git(['commit', '--no-edit', '-m', message], { cwd: worktreePath });
     return true;
   } catch {
     return false;
@@ -400,7 +385,7 @@ export function removeWorktree(taskId: string, projectDir: string): void {
 
   try {
     if (existsSync(worktreePath)) {
-      execSync(`git worktree remove "${worktreePath}" --force`, { cwd: gitRoot, stdio: 'pipe' });
+      git(['worktree', 'remove', worktreePath, '--force'], { cwd: gitRoot });
     }
   } catch {
     // Best effort
@@ -408,7 +393,7 @@ export function removeWorktree(taskId: string, projectDir: string): void {
 
   // Prune stale worktree references so branch is no longer "checked out"
   try {
-    execSync('git worktree prune', { cwd: gitRoot, stdio: 'pipe' });
+    git(['worktree', 'prune'], { cwd: gitRoot });
   } catch {
     // Best effort
   }
@@ -422,20 +407,20 @@ export function removeWorktreeAndBranch(taskId: string, projectDir: string): voi
 
   try {
     if (existsSync(worktreePath)) {
-      execSync(`git worktree remove "${worktreePath}" --force`, { cwd: gitRoot, stdio: 'pipe' });
+      git(['worktree', 'remove', worktreePath, '--force'], { cwd: gitRoot });
     }
   } catch {
     // Best effort
   }
 
   try {
-    execSync('git worktree prune', { cwd: gitRoot, stdio: 'pipe' });
+    git(['worktree', 'prune'], { cwd: gitRoot });
   } catch {
     // Best effort
   }
 
   try {
-    execSync(`git branch -D "${branchName}"`, { cwd: gitRoot, stdio: 'pipe' });
+    git(['branch', '-D', branchName], { cwd: gitRoot });
   } catch {
     // Best effort
   }
@@ -449,7 +434,7 @@ export function listWorktrees(projectDir: string): WorktreeInfo[] {
   if (!existsSync(worktreeBase)) return [];
 
   try {
-    const output = execSync('git worktree list --porcelain', { cwd: gitRoot, stdio: 'pipe' }).toString();
+    const output = git(['worktree', 'list', '--porcelain'], { cwd: gitRoot });
     const worktrees: WorktreeInfo[] = [];
 
     const blocks = output.split('\n\n');
@@ -479,10 +464,7 @@ export function listWorktrees(projectDir: string): WorktreeInfo[] {
 /** Check if a worktree has uncommitted changes */
 export function hasChanges(worktreePath: string): boolean {
   try {
-    const output = execSync('git status --porcelain', {
-      cwd: worktreePath,
-      stdio: 'pipe',
-    }).toString();
+    const output = git(['status', '--porcelain'], { cwd: worktreePath });
 
     return output
       .split('\n')
@@ -501,7 +483,7 @@ export function hasChanges(worktreePath: string): boolean {
 export function getWorktreeDiff(worktreePath: string): string {
   try {
     // Get diff against the branch point
-    const diff = execSync('git diff HEAD', { cwd: worktreePath, stdio: 'pipe', maxBuffer: 1024 * 1024 }).toString();
+    const diff = git(['diff', 'HEAD'], { cwd: worktreePath, maxBuffer: 1024 * 1024 });
     return diff;
   } catch {
     return '';

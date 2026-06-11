@@ -1,9 +1,22 @@
 import { existsSync, mkdirSync, copyFileSync, renameSync, unlinkSync, readFileSync, readdirSync, rmSync } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, basename } from 'path';
 import { randomUUID } from 'crypto';
 import { getDb } from '../db/connection.js';
 import { AppError } from '../middleware/error-handler.js';
 import { logTimestamp } from '../lib/log-timestamp.js';
+
+/**
+ * Strip any path components from a user-supplied filename so it can never
+ * escape the `.attachments/` directory. Defends against path traversal
+ * (e.g. "../../.git/hooks/pre-commit") in the uploaded file's original name.
+ */
+export function sanitizeAttachmentName(name: string): string {
+  // basename() drops directory segments on both posix/win separators after
+  // normalizing backslashes; fall back to a safe default if nothing remains.
+  const stripped = basename(name.replace(/\\/g, '/')).replace(/^\.+/, '');
+  const cleaned = stripped.replace(/[/\0]/g, '').trim();
+  return cleaned || 'attachment';
+}
 
 export interface AttachmentRow {
   id: string;
@@ -54,8 +67,9 @@ export function copyToWorktree(
 
   for (const att of attachments) {
     const src = join(uploadsDir(att.pipeline_id), att.filename);
-    // Use original name for agent readability; handle collisions with suffix
-    let destName = att.original_name;
+    // Use original name for agent readability; sanitize to keep it inside
+    // attachDir, then handle collisions with a suffix.
+    let destName = sanitizeAttachmentName(att.original_name);
     let destPath = join(attachDir, destName);
 
     if (existsSync(destPath)) {
@@ -92,7 +106,7 @@ export function copyMessageAttachmentsToWorktree(
 
   for (const att of attachments) {
     const src = join(uploadsDir(att.pipeline_id), att.filename);
-    let destName = att.original_name;
+    let destName = sanitizeAttachmentName(att.original_name);
     let destPath = join(attachDir, destName);
 
     if (existsSync(destPath)) {
@@ -124,12 +138,15 @@ export function formatBytes(bytes: number): string {
 
 /** Format a file reference path per provider conventions */
 export function formatFileReference(originalName: string, provider: string): string {
+  // Sanitize so the reference matches the on-disk copy and can't point outside
+  // the worktree's `.attachments/` directory.
+  const safe = sanitizeAttachmentName(originalName);
   // Gemini uses @path syntax to inject file content into prompt
   if (provider === 'gemini') {
-    return `@.attachments/${originalName}`;
+    return `@.attachments/${safe}`;
   }
   // Claude and Codex just reference the path — agents read files from cwd
-  return `.attachments/${originalName}`;
+  return `.attachments/${safe}`;
 }
 
 /** Build a prompt with attachment context prepended, per provider conventions */
@@ -273,14 +290,15 @@ export function saveAttachments(
   const results: AttachmentResponse[] = [];
   for (const f of files) {
     const id = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    insert.run(id, targetType, targetId, pipelineId, f.filename, f.originalname, f.mimetype, f.size, now);
+    const originalName = sanitizeAttachmentName(f.originalname);
+    insert.run(id, targetType, targetId, pipelineId, f.filename, originalName, f.mimetype, f.size, now);
     results.push({
       id,
       targetType,
       targetId,
       pipelineId,
       filename: f.filename,
-      originalName: f.originalname,
+      originalName,
       mimeType: f.mimetype,
       sizeBytes: f.size,
       createdAt: now,

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import { getDb } from '../db/connection.js';
 import { validate } from '../middleware/validate.js';
@@ -19,6 +19,18 @@ const router = Router();
 
 const RECORD_SEP = '\x1e'; // ASCII record separator — safe delimiter for git log
 
+/**
+ * Run a git command with arguments passed as an argv array (never a shell
+ * string), so branch names / refs from user input can't inject shell commands.
+ */
+function git(args: string[], opts: { cwd: string; maxBuffer?: number }): string {
+  return execFileSync('git', args, {
+    cwd: opts.cwd,
+    stdio: 'pipe',
+    maxBuffer: opts.maxBuffer,
+  }).toString();
+}
+
 interface TaskRow {
   id: string;
   pipeline_id: string;
@@ -37,7 +49,7 @@ function getBranchName(taskId: string): string {
 
 function branchExists(branch: string, cwd: string): boolean {
   try {
-    const out = execSync(`git branch --list "${branch}"`, { cwd, stdio: 'pipe' }).toString().trim();
+    const out = git(['branch', '--list', branch], { cwd }).trim();
     return out.length > 0;
   } catch {
     return false;
@@ -46,7 +58,7 @@ function branchExists(branch: string, cwd: string): boolean {
 
 function getMainBranch(cwd: string): string {
   try {
-    const branches = execSync('git branch --list main master', { cwd, stdio: 'pipe' }).toString().trim();
+    const branches = git(['branch', '--list', 'main', 'master'], { cwd }).trim();
     if (branches.includes('main')) return 'main';
     if (branches.includes('master')) return 'master';
     return 'main';
@@ -68,7 +80,7 @@ function getPipelineBaseBranch(
 
 function getConflictFiles(cwd: string): string[] {
   try {
-    const output = execSync('git diff --name-only --diff-filter=U', { cwd, stdio: 'pipe' }).toString().trim();
+    const output = git(['diff', '--name-only', '--diff-filter=U'], { cwd }).trim();
     return output ? output.split('\n').filter(Boolean) : [];
   } catch {
     return [];
@@ -130,10 +142,10 @@ router.get('/tasks/:id/git-status', (req, res) => {
   let commitsAhead = 0;
   let commitsBehind = 0;
   try {
-    const revList = execSync(
-      `git rev-list --left-right --count "${mainBranch}...${branch}"`,
-      { cwd: gitRoot, stdio: 'pipe' }
-    ).toString().trim();
+    const revList = git(
+      ['rev-list', '--left-right', '--count', `${mainBranch}...${branch}`],
+      { cwd: gitRoot }
+    ).trim();
     const [behind, ahead] = revList.split('\t').map(Number);
     commitsAhead = ahead ?? 0;
     commitsBehind = behind ?? 0;
@@ -143,7 +155,7 @@ router.get('/tasks/:id/git-status', (req, res) => {
   let hasUncommitted = false;
   if (task.worktree_path && existsSync(task.worktree_path)) {
     try {
-      const status = execSync('git status --porcelain', { cwd: task.worktree_path, stdio: 'pipe' }).toString().trim();
+      const status = git(['status', '--porcelain'], { cwd: task.worktree_path }).trim();
       hasUncommitted = status.length > 0;
     } catch { /* best effort */ }
   }
@@ -151,17 +163,17 @@ router.get('/tasks/:id/git-status', (req, res) => {
   // Is branch merged into main?
   let isMerged = false;
   try {
-    const merged = execSync(`git branch --merged "${mainBranch}"`, { cwd: gitRoot, stdio: 'pipe' }).toString();
+    const merged = git(['branch', '--merged', mainBranch], { cwd: gitRoot });
     isMerged = merged.split('\n').some(b => b.replace(/^[*+]\s*/, '').trim() === branch);
   } catch { /* best effort */ }
 
   // Changed files (branch vs main)
   let changedFiles: string[] = [];
   try {
-    const diff = execSync(
-      `git diff --name-only "${mainBranch}...${branch}"`,
-      { cwd: gitRoot, stdio: 'pipe' }
-    ).toString().trim();
+    const diff = git(
+      ['diff', '--name-only', `${mainBranch}...${branch}`],
+      { cwd: gitRoot }
+    ).trim();
     changedFiles = diff ? diff.split('\n').filter(Boolean) : [];
   } catch { /* best effort */ }
 
@@ -169,10 +181,10 @@ router.get('/tasks/:id/git-status', (req, res) => {
   let commitLog: { hash: string; message: string; date: string }[] = [];
   if (commitsAhead > 0) {
     try {
-      const log = execSync(
-        `git log "${mainBranch}..${branch}" --format="%h${RECORD_SEP}%s${RECORD_SEP}%ci" --max-count=20`,
-        { cwd: gitRoot, stdio: 'pipe' }
-      ).toString().trim();
+      const log = git(
+        ['log', `${mainBranch}..${branch}`, `--format=%h${RECORD_SEP}%s${RECORD_SEP}%ci`, '--max-count=20'],
+        { cwd: gitRoot }
+      ).trim();
       commitLog = log.split('\n').filter(Boolean).map(line => {
         const parts = line.split(RECORD_SEP);
         return { hash: parts[0]!, message: parts[1]!, date: parts[2]! };
@@ -206,10 +218,10 @@ router.get('/tasks/:id/git-diff', (req, res) => {
   const { gitRoot, branch, mainBranch } = ctx;
 
   try {
-    const diff = execSync(
-      `git diff "${mainBranch}...${branch}"`,
-      { cwd: gitRoot, stdio: 'pipe', maxBuffer: 2 * 1024 * 1024 }
-    ).toString();
+    const diff = git(
+      ['diff', `${mainBranch}...${branch}`],
+      { cwd: gitRoot, maxBuffer: 2 * 1024 * 1024 }
+    );
     res.json({ diff });
   } catch {
     res.json({ diff: '' });
@@ -256,10 +268,10 @@ router.post('/tasks/:id/git-action', validate(GitActionSchema), (req, res) => {
         return;
       }
 
-      const baseCommit = execSync(
-        `git rev-parse --verify "${mainBranch}"`,
-        { cwd: gitRoot, stdio: 'pipe' },
-      ).toString().trim();
+      const baseCommit = git(
+        ['rev-parse', '--verify', mainBranch],
+        { cwd: gitRoot },
+      ).trim();
 
       const integrationWorktree = createTempWorktreeFromRef(
         projectDir,
@@ -268,30 +280,24 @@ router.post('/tasks/:id/git-action', validate(GitActionSchema), (req, res) => {
       );
 
       try {
-        execSync(`git merge "${branch}" --no-edit -m "Merge ${branch} into ${mainBranch}"`, {
+        git(['merge', branch, '--no-edit', '-m', `Merge ${branch} into ${mainBranch}`], {
           cwd: integrationWorktree.path,
-          stdio: 'pipe',
         });
 
-        const mergedCommit = execSync('git rev-parse HEAD', {
+        const mergedCommit = git(['rev-parse', 'HEAD'], {
           cwd: integrationWorktree.path,
-          stdio: 'pipe',
-        }).toString().trim();
+        }).trim();
 
         if (baseCheckoutPaths.length > 0) {
           for (const checkoutPath of baseCheckoutPaths) {
-            execSync(`git merge --ff-only "${mergedCommit}"`, {
+            git(['merge', '--ff-only', mergedCommit], {
               cwd: checkoutPath,
-              stdio: 'pipe',
             });
           }
         } else {
-          execSync(
-            `git update-ref "refs/heads/${mainBranch}" "${mergedCommit}" "${baseCommit}"`,
-            {
-              cwd: gitRoot,
-              stdio: 'pipe',
-            },
+          git(
+            ['update-ref', `refs/heads/${mainBranch}`, mergedCommit, baseCommit],
+            { cwd: gitRoot },
           );
         }
 
@@ -306,15 +312,13 @@ router.post('/tasks/:id/git-action', validate(GitActionSchema), (req, res) => {
         const conflictFiles = getConflictFiles(integrationWorktree.path);
         let branchSha: string | null = null;
         try {
-          branchSha = execSync(`git rev-parse --verify "${branch}"`, {
+          branchSha = git(['rev-parse', '--verify', branch], {
             cwd: gitRoot,
-            stdio: 'pipe',
-          }).toString().trim();
+          }).trim();
         } catch { /* branch missing — leave null */ }
         try {
-          execSync('git merge --abort', {
+          git(['merge', '--abort'], {
             cwd: integrationWorktree.path,
-            stdio: 'pipe',
           });
         } catch { /* */ }
         db.prepare(
@@ -372,9 +376,8 @@ router.post('/tasks/:id/git-action', validate(GitActionSchema), (req, res) => {
       const rebaseCwd = persistentWorktree ?? tempWorktree!.path;
 
       try {
-        execSync(`git rebase "${mainBranch}"`, {
+        git(['rebase', mainBranch], {
           cwd: rebaseCwd,
-          stdio: 'pipe',
         });
         tempWorktree?.cleanup();
         db.prepare(
@@ -386,18 +389,16 @@ router.post('/tasks/:id/git-action', validate(GitActionSchema), (req, res) => {
         let baseSha: string | null = null;
         let branchSha: string | null = null;
         try {
-          baseSha = execSync(`git rev-parse --verify "${mainBranch}"`, {
+          baseSha = git(['rev-parse', '--verify', mainBranch], {
             cwd: gitRoot,
-            stdio: 'pipe',
-          }).toString().trim();
+          }).trim();
         } catch { /* leave null */ }
         try {
-          branchSha = execSync(`git rev-parse --verify "${branch}"`, {
+          branchSha = git(['rev-parse', '--verify', branch], {
             cwd: gitRoot,
-            stdio: 'pipe',
-          }).toString().trim();
+          }).trim();
         } catch { /* leave null */ }
-        try { execSync('git rebase --abort', { cwd: rebaseCwd, stdio: 'pipe' }); } catch { /* */ }
+        try { git(['rebase', '--abort'], { cwd: rebaseCwd }); } catch { /* */ }
         if (!persistentWorktree) {
           db.prepare(
             'UPDATE tasks SET worktree_path = ?, worktree_status = ? WHERE id = ?'
@@ -460,7 +461,7 @@ router.get('/pipelines/:id/branches', (req, res) => {
 
   const gitRoot = getGitRoot(pipeline.working_dir);
   try {
-    const raw = execSync('git branch --no-color', { cwd: gitRoot, stdio: 'pipe' }).toString().trim();
+    const raw = git(['branch', '--no-color'], { cwd: gitRoot }).trim();
     const branches = raw
       .split('\n')
       .map(b => b.replace(/^[*+]\s*/, '').trim())
@@ -523,10 +524,9 @@ router.post('/tasks/:id/switch-branch', (req, res) => {
   // Check for uncommitted changes in current worktree
   if (task.worktree_path && existsSync(task.worktree_path)) {
     try {
-      const status = execSync('git status --porcelain', {
+      const status = git(['status', '--porcelain'], {
         cwd: task.worktree_path,
-        stdio: 'pipe',
-      }).toString().trim();
+      }).trim();
       if (status.length > 0) {
         res.status(409).json({
           error: 'uncommitted_changes',
