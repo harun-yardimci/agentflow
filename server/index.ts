@@ -11,6 +11,7 @@ import { seedSafetyRules, listRules, toggleRule } from './safety/index.js';
 import { recoverOrphans, setupCascadeListener } from './engine/pipeline-runner.js';
 import { startCleanupScheduler, stopCleanupScheduler } from './engine/cleanup-service.js';
 import { startRateLimitResumer, stopRateLimitResumer } from './engine/rate-limit-resumer.js';
+import { startRoutineScheduler, stopRoutineScheduler } from './engine/routine-scheduler.js';
 import {
   startWorktreeCleanupScheduler,
   stopWorktreeCleanupScheduler,
@@ -29,6 +30,7 @@ import executionRoutes from './routes/execution.js';
 import analyticsRoutes from './routes/analytics.js';
 import memoryRoutes from './routes/memory.js';
 import breakdownRoutes from './routes/breakdown.js';
+import routineRoutes from './routes/routines.js';
 import filesystemRoutes from './routes/filesystem.js';
 import gitRoutes from './routes/git.js';
 import uploadRoutes from './routes/uploads.js';
@@ -79,6 +81,7 @@ recoverOrphans();
 startCleanupScheduler();
 startWorktreeCleanupScheduler();
 startRateLimitResumer();
+startRoutineScheduler();
 
 // Setup cascade event listeners
 setupCascadeListener();
@@ -101,6 +104,7 @@ app.use('/api', executionRoutes);
 app.use('/api', analyticsRoutes);
 app.use('/api', memoryRoutes);
 app.use('/api', breakdownRoutes);
+app.use('/api', routineRoutes);
 app.use('/api/filesystem', filesystemRoutes);
 app.use('/api', gitRoutes);
 app.use('/api', uploadRoutes);
@@ -325,6 +329,7 @@ function shutdown() {
   stopCleanupScheduler();
   stopWorktreeCleanupScheduler();
   stopRateLimitResumer();
+  stopRoutineScheduler();
   closeDb();
 
   if (httpServer) {

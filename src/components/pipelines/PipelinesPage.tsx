@@ -49,6 +49,11 @@ const TaskDrawer = lazy(async () => {
   return { default: module.TaskDrawer };
 });
 
+const RoutinesDrawer = lazy(async () => {
+  const module = await import('./RoutinesDrawer');
+  return { default: module.RoutinesDrawer };
+});
+
 interface PipelinesPageProps {
   onNewPipelineOpen: () => void;
   newPipelineOpen: boolean;
@@ -89,6 +94,7 @@ export function PipelinesPage({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showRoutines, setShowRoutines] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logsPipelineRef = useRef<string | null>(null);
@@ -372,6 +378,12 @@ export function PipelinesPage({
               setBanner(null);
             }
           }}
+          onRoutines={() => {
+            setShowRoutines(true);
+            setSelectedTaskId(null);
+            setShowAddTask(false);
+            setShowSettings(false);
+          }}
           onSettings={() => {
             setShowSettings(true);
             setSelectedTaskId(null);
@@ -510,6 +522,17 @@ export function PipelinesPage({
             onUpdate={handleUpdateTask}
             task={selectedTask}
             tasks={pipeline.tasks}
+          />
+        </Suspense>
+      )}
+
+      {showRoutines && pipeline && (
+        <Suspense fallback={null}>
+          <RoutinesDrawer
+            agents={agents}
+            enabledAgentIds={pipeline.enabledAgents}
+            onClose={() => setShowRoutines(false)}
+            pipelineId={pipeline.id}
           />
         </Suspense>
       )}
