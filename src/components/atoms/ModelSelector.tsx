@@ -26,22 +26,22 @@ export function ModelSelector({
   onChangeRef.current = onChange;
 
   // Auto-normalize: if value is a provider-only key (e.g. "claude") that doesn't
-  // match any model id, auto-select the first sub-model of that provider.
+  // match any model id, auto-select the first selectable sub-model of that provider.
   useEffect(() => {
     if (!value || models.length === 0) return;
     if (getModel(value)) return; // value already matches a valid model
-    const subModels = getProviderModels(activeProviderId);
-    if (subModels.length > 0) {
-      onChangeRef.current(subModels[0]!.id);
+    const firstSelectable = getProviderModels(activeProviderId).find((m) => m.enabled !== false);
+    if (firstSelectable) {
+      onChangeRef.current(firstSelectable.id);
     }
   }, [value, models, activeProviderId, getModel, getProviderModels]);
 
   const handleProviderChange = (providerId: string) => {
     if (disabled) return;
-    // When switching provider, pick its first sub-model
-    const subModels = getProviderModels(providerId);
-    if (subModels.length > 0) {
-      onChange(subModels[0]!.id);
+    // When switching provider, pick its first selectable sub-model
+    const firstSelectable = getProviderModels(providerId).find((m) => m.enabled !== false);
+    if (firstSelectable) {
+      onChange(firstSelectable.id);
     }
   };
 
@@ -86,6 +86,8 @@ export function ModelSelector({
       <div className="flex flex-wrap gap-1">
         {subModels.map((model) => {
           const isActive = value === model.id;
+          // Disabled models stay in the list but can't be picked.
+          const isModelDisabled = model.enabled === false;
           const provider = providers.find((p) => p.id === activeProviderId);
           // Strip provider prefix for chip display (e.g. "Claude Sonnet" -> "Sonnet")
           const providerLabel = provider?.label ?? '';
@@ -95,7 +97,8 @@ export function ModelSelector({
             <button
               key={model.id}
               type="button"
-              disabled={disabled}
+              disabled={disabled || isModelDisabled}
+              title={isModelDisabled ? `${model.label} is currently unavailable` : undefined}
               onClick={() => handleSubModelChange(model.id)}
               className={cn(
                 'rounded border font-mono transition-all',
@@ -104,6 +107,7 @@ export function ModelSelector({
                   ? 'border-current font-semibold'
                   : 'border-border-secondary text-text-dim hover:border-border-hover',
                 disabled && 'pointer-events-none opacity-50',
+                isModelDisabled && 'cursor-not-allowed opacity-40 line-through hover:border-border-secondary',
               )}
               style={isActive ? { color: model.color, backgroundColor: model.bg } : undefined}
             >
