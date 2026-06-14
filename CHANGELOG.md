@@ -5,6 +5,29 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-06-15
+
+### Added
+
+- **Routines — recurring scheduled tasks per pipeline.** Each pipeline can now
+  define routines that spawn a fresh task on a preset schedule (hourly, daily,
+  or weekly) interpreted in the server's local timezone. Triggers reuse the
+  existing task-creation, worker-pool, and approval flow — `auto` routines run
+  immediately, `manual` routines wait for approval and skip a fire while a prior
+  run is still pending. Misconfigured routines (deleted agent) are skipped
+  instead of spawning failing tasks, and the schedule is advanced atomically
+  with task creation so a partial failure can't re-fire the routine. Managed
+  from a Routines drawer on the pipeline header, over REST
+  (`/api/pipelines/:id/routines`, `…/routines/:id/run`), and via MCP tools
+  (`list_routines`, `create_routine`, `update_routine`, `delete_routine`,
+  `run_routine`).
+
+### Changed
+
+- **Claude Fable 5 temporarily disabled.** The model stays visible in the
+  selector but is not selectable while a provider-side outage persists; it will
+  be re-enabled when service is restored.
+
 ## [1.1.2] — 2026-06-11
 
 ### Security
