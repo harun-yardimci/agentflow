@@ -19,6 +19,7 @@ interface PipelineHeaderProps {
   onAddTask: () => void;
   onArchiveAllDone: () => void;
   onPause: () => void;
+  onRoutines: () => void;
   onRun: () => void;
   onSearchQueryChange: (query: string) => void;
   onSettings: () => void;
@@ -72,6 +73,7 @@ export function PipelineHeader({
   onAddTask,
   onRun,
   onPause,
+  onRoutines,
   onSettings,
   onViewChange,
 }: PipelineHeaderProps) {
@@ -191,6 +193,9 @@ export function PipelineHeader({
               Archive Done
             </Button>
           )}
+          <Button className="h-7 px-2.5" onClick={onRoutines} size="sm" variant="ghost">
+            Routines
+          </Button>
           <Button className="h-7 px-2.5" onClick={onSettings} size="sm" variant="ghost">
             Settings
           </Button>

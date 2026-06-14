@@ -9,10 +9,27 @@ import type {
   LogEntry,
   Pipeline,
   PipelineStage,
+  Routine,
   Task,
   TaskCycle,
   UsageAnalytics,
 } from '@/types';
+
+export interface RoutineInput {
+  name: string;
+  agentId: string;
+  model: string;
+  approval: string;
+  input: string;
+  scheduleKind: string;
+  scheduleTime: string;
+  scheduleWeekday: number;
+  useWorktree: boolean;
+  branch: string | null;
+  timeoutMs: number | null;
+  priority: string | null;
+  enabled: boolean;
+}
 
 const BASE = '/api';
 
@@ -55,6 +72,18 @@ export const updatePipeline = (id: string, data: { name?: string; status?: strin
   request<Pipeline>(`/pipelines/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deletePipeline = (id: string) =>
   request<{ deleted: boolean }>(`/pipelines/${id}`, { method: 'DELETE' });
+
+// Routines
+export const fetchRoutines = (pipelineId: string) =>
+  request<Routine[]>(`/pipelines/${pipelineId}/routines`);
+export const createRoutine = (pipelineId: string, data: RoutineInput) =>
+  request<Routine>(`/pipelines/${pipelineId}/routines`, { method: 'POST', body: JSON.stringify(data) });
+export const updateRoutine = (id: string, data: Partial<RoutineInput>) =>
+  request<Routine>(`/routines/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteRoutine = (id: string) =>
+  request<{ ok: true }>(`/routines/${id}`, { method: 'DELETE' });
+export const runRoutine = (id: string) =>
+  request<Task>(`/routines/${id}/run`, { method: 'POST' });
 
 // Pipeline Stages
 export const fetchStages = (pipelineId: string) =>
