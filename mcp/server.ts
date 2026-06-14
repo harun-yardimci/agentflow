@@ -6,6 +6,8 @@ import { seedDatabase } from '../server/db/seed.js';
 import * as pipelineService from '../server/services/pipeline-service.js';
 import * as taskService from '../server/services/task-service.js';
 import * as contextService from '../server/services/context-service.js';
+import * as routineService from '../server/services/routine-service.js';
+import { triggerRoutine } from '../server/engine/routine-scheduler.js';
 import { buildAllowResponse, buildDenyResponse } from '../server/executor/control-protocol.js';
 import { pausePipeline, retryTask, abortTask, resumeTask } from '../server/engine/pipeline-runner.js';
 import { resolveApiPortForDev } from '../server/config/ports.js';
@@ -592,6 +594,115 @@ export function createMcpServer(): McpServer {
         );
 
         return { content: [{ type: 'text', text: JSON.stringify({ ok: true, requestId, action }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
+      }
+    }
+  );
+
+  // ─── Routine Tools ───
+  // A routine is a recurring task template scoped to a pipeline. The server's
+  // routine scheduler spawns a fresh task into the pipeline on each schedule fire.
+
+  server.tool(
+    'list_routines',
+    'List all recurring routines for a pipeline',
+    { pipelineId: z.string().describe('Pipeline ID') },
+    async ({ pipelineId }) => {
+      try {
+        const routines = routineService.listRoutines(pipelineId);
+        return { content: [{ type: 'text', text: JSON.stringify(routines, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    'create_routine',
+    'Create a recurring routine that spawns a task into a pipeline on a schedule (hourly/daily/weekly)',
+    {
+      pipelineId: z.string().describe('Pipeline ID'),
+      name: z.string().describe('Routine / task name'),
+      agentId: z.string().describe('Agent ID to run the task'),
+      model: z.string().default('claude:sonnet').describe('Model key (e.g. claude:sonnet)'),
+      approval: z.enum(['auto', 'manual', 'on_error']).default('auto'),
+      input: z.string().default('').describe('Task prompt'),
+      scheduleKind: z.enum(['hourly', 'daily', 'weekly']).default('daily'),
+      scheduleTime: z.string().default('09:00').describe("'HH:MM' (24h, server local time) — used by daily/weekly"),
+      scheduleWeekday: z.number().min(0).max(6).default(1).describe('0=Sunday … 6=Saturday — used by weekly'),
+      useWorktree: z.boolean().default(true),
+      branch: z.string().nullable().default(null),
+      priority: z.enum(['urgent', 'high', 'medium', 'low']).nullable().default(null),
+      enabled: z.boolean().default(true),
+    },
+    async ({ pipelineId, ...data }) => {
+      try {
+        const routine = routineService.createRoutine(pipelineId, { ...data, timeoutMs: null });
+        return { content: [{ type: 'text', text: JSON.stringify(routine, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    'update_routine',
+    'Update a routine (any field, including enabling/disabling or changing the schedule)',
+    {
+      id: z.string().describe('Routine ID'),
+      name: z.string().optional(),
+      agentId: z.string().optional(),
+      model: z.string().optional(),
+      approval: z.enum(['auto', 'manual', 'on_error']).optional(),
+      input: z.string().optional(),
+      scheduleKind: z.enum(['hourly', 'daily', 'weekly']).optional(),
+      scheduleTime: z.string().optional(),
+      scheduleWeekday: z.number().min(0).max(6).optional(),
+      useWorktree: z.boolean().optional(),
+      branch: z.string().nullable().optional(),
+      priority: z.enum(['urgent', 'high', 'medium', 'low']).nullable().optional(),
+      enabled: z.boolean().optional(),
+    },
+    async ({ id, ...data }) => {
+      try {
+        const routine = routineService.updateRoutine(id, data);
+        return { content: [{ type: 'text', text: JSON.stringify(routine, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    'delete_routine',
+    'Delete a routine',
+    { id: z.string().describe('Routine ID') },
+    async ({ id }) => {
+      try {
+        const result = routineService.deleteRoutine(id);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    'run_routine',
+    'Trigger a routine immediately (does not advance its recurring schedule)',
+    { id: z.string().describe('Routine ID') },
+    async ({ id }) => {
+      try {
+        const routine = routineService.getRoutine(id);
+        if (!routine.enabled) {
+          return { content: [{ type: 'text', text: 'Error: Routine is disabled — enable it before running' }], isError: true };
+        }
+        const taskId = triggerRoutine(routine, false);
+        if (!taskId) {
+          return { content: [{ type: 'text', text: 'Error: Routine could not run (agent missing, or a previous run is still awaiting approval)' }], isError: true };
+        }
+        return { content: [{ type: 'text', text: JSON.stringify({ ok: true, taskId }, null, 2) }] };
       } catch (err) {
         return { content: [{ type: 'text', text: `Error: ${(err as Error).message}` }], isError: true };
       }

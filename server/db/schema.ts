@@ -838,6 +838,43 @@ export function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_context_packets_hash ON context_packets(content_hash);
   `);
 
+  // ─── Routines table ───
+  // A routine is a recurring task template scoped to a pipeline. The routine
+  // scheduler (engine/routine-scheduler.ts) polls for due rows and spawns a
+  // fresh task into the pipeline on each trigger. Schedule is preset-based
+  // (hourly/daily/weekly), interpreted in the server's local timezone.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS routines (
+      id TEXT PRIMARY KEY,
+      pipeline_id TEXT NOT NULL REFERENCES pipelines(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      agent_id TEXT NOT NULL,
+      model TEXT NOT NULL DEFAULT 'claude:sonnet',
+      approval TEXT NOT NULL DEFAULT 'auto',
+      input TEXT NOT NULL DEFAULT '',
+      schedule_kind TEXT NOT NULL DEFAULT 'daily',
+      schedule_time TEXT NOT NULL DEFAULT '09:00',
+      schedule_weekday INTEGER NOT NULL DEFAULT 1,
+      use_worktree INTEGER NOT NULL DEFAULT 1,
+      branch TEXT,
+      timeout_ms INTEGER,
+      priority TEXT,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      last_triggered_at TEXT,
+      next_trigger_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_routines_pipeline ON routines(pipeline_id);
+    CREATE INDEX IF NOT EXISTS idx_routines_due ON routines(next_trigger_at) WHERE enabled = 1;
+  `);
+
+  // Migration: link routine-spawned tasks back to their routine for UI filtering.
+  try {
+    db.exec('ALTER TABLE tasks ADD COLUMN routine_id TEXT');
+  } catch (err) {
+    if (!(err instanceof Error) || !err.message.includes('duplicate column')) throw err;
+  }
+
   // Migration: backfill task_cycles and execution_runs.cycle_id for older data.
   try {
     const taskRows = db.prepare('SELECT id, created_at FROM tasks').all() as { id: string; created_at: string | null }[];

@@ -5,7 +5,7 @@ const PIPELINE_RULES_MAX = 20000;
 const PIPELINE_WORKING_DIR_MAX = 500;
 
 export const TaskStatusEnum = z.enum(['queued', 'running', 'completed', 'blocked', 'awaiting_approval', 'failed', 'rejected', 'skipped', 'rate_limited']);
-export const TaskTypeEnum = z.enum(['seeded', 'spawned', 'planned', 'system']);
+export const TaskTypeEnum = z.enum(['seeded', 'spawned', 'planned', 'system', 'routine']);
 export const ApprovalModeEnum = z.enum(['auto', 'manual', 'on_error']);
 /** Dynamic model key — validated as string, checked against DB at runtime */
 export const ModelKeyEnum = z.string().min(1).max(100);
@@ -160,6 +160,42 @@ export const BatchCreateTaskSchema = z.object({
 
 export const BatchCreateTasksSchema = z.object({
   tasks: z.array(BatchCreateTaskSchema).min(1).max(50),
+});
+
+// ─── Routines ───
+
+export const ScheduleKindEnum = z.enum(['hourly', 'daily', 'weekly']);
+
+export const CreateRoutineSchema = z.object({
+  name: z.string().min(1).max(200),
+  agentId: z.string().min(1),
+  model: ModelKeyEnum.default('claude:sonnet'),
+  approval: ApprovalModeEnum.default('auto'),
+  input: z.string().default(''),
+  scheduleKind: ScheduleKindEnum.default('daily'),
+  scheduleTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
+  scheduleWeekday: z.number().int().min(0).max(6).default(1),
+  useWorktree: z.boolean().default(true),
+  branch: z.string().max(200).nullable().default(null),
+  timeoutMs: z.number().int().positive().max(7_200_000).nullable().default(null),
+  priority: TaskPriorityEnum.nullable().default(null),
+  enabled: z.boolean().default(true),
+});
+
+export const UpdateRoutineSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  agentId: z.string().min(1).optional(),
+  model: ModelKeyEnum.optional(),
+  approval: ApprovalModeEnum.optional(),
+  input: z.string().optional(),
+  scheduleKind: ScheduleKindEnum.optional(),
+  scheduleTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+  scheduleWeekday: z.number().int().min(0).max(6).optional(),
+  useWorktree: z.boolean().optional(),
+  branch: z.string().max(200).nullable().optional(),
+  timeoutMs: z.number().int().positive().max(7_200_000).nullable().optional(),
+  priority: TaskPriorityEnum.nullable().optional(),
+  enabled: z.boolean().optional(),
 });
 
 // ─── Provider & Model CRUD ───
