@@ -40,10 +40,11 @@ function modelToTone(model: Task['model']): 'info' | 'success' | 'warning' | 'vi
   return 'warning';
 }
 
-function taskTypeTone(taskType: Task['taskType']): 'info' | 'warning' | 'success' | 'neutral' {
+function taskTypeTone(taskType: Task['taskType']): 'info' | 'warning' | 'success' | 'neutral' | 'violet' {
   if (taskType === 'spawned') return 'warning';
   if (taskType === 'planned') return 'info';
   if (taskType === 'seeded') return 'success';
+  if (taskType === 'routine') return 'violet';
   return 'neutral';
 }
 

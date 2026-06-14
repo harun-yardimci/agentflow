@@ -29,6 +29,7 @@ interface TaskRow {
   timeout_ms: number;
   task_type?: string;
   source_task_id?: string | null;
+  routine_id?: string | null;
   stage_id?: string | null;
   created_at?: string;
   interactive_mode?: number;
@@ -211,6 +212,7 @@ function formatTask(
     tags,
     taskType: row.task_type ?? 'seeded',
     sourceTaskId: row.source_task_id ?? null,
+    routineId: row.routine_id ?? null,
     sourceTaskName: sourceTaskMeta?.name ?? null,
     sourceTaskStatus: sourceTaskMeta?.status ?? null,
     sourceTaskArchivedAt: sourceTaskMeta?.archivedAt ?? null,

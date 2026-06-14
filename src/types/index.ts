@@ -1,5 +1,6 @@
 export type TaskStatus = 'queued' | 'running' | 'completed' | 'blocked' | 'awaiting_approval' | 'failed' | 'rejected' | 'paused' | 'skipped' | 'rate_limited';
-export type TaskType = 'seeded' | 'spawned' | 'planned' | 'system';
+export type TaskType = 'seeded' | 'spawned' | 'planned' | 'system' | 'routine';
+export type ScheduleKind = 'hourly' | 'daily' | 'weekly';
 export type ApprovalMode = 'auto' | 'manual' | 'on_error';
 /** Dynamic model key — stored in DB, not hardcoded */
 export type ModelKey = string;
@@ -22,6 +23,31 @@ export interface PipelineStage {
   sortOrder: number;
   color: string;
   maxParallel: number;
+}
+
+export interface Routine {
+  id: string;
+  pipelineId: string;
+  name: string;
+  agentId: string;
+  model: ModelKey;
+  approval: ApprovalMode;
+  input: string;
+  scheduleKind: ScheduleKind;
+  /** 'HH:MM' (24h, server local time) — used by daily/weekly */
+  scheduleTime: string;
+  /** 0=Sunday … 6=Saturday — used by weekly */
+  scheduleWeekday: number;
+  useWorktree: boolean;
+  branch: string | null;
+  timeoutMs: number | null;
+  priority: TaskPriority | null;
+  enabled: boolean;
+  lastTriggeredAt: string | null;
+  nextTriggerAt: string | null;
+  createdAt: string;
+  /** IANA timezone the server interprets schedule times in. */
+  serverTimeZone: string;
 }
 
 export interface DependencyCondition {
@@ -53,6 +79,7 @@ export interface Task {
   tags: string[];
   taskType: TaskType;
   sourceTaskId: string | null;
+  routineId?: string | null;
   sourceTaskName?: string | null;
   sourceTaskStatus?: TaskStatus | null;
   sourceTaskArchivedAt?: string | null;
