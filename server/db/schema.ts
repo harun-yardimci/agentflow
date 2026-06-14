@@ -725,6 +725,15 @@ export function createTables(db: Database.Database): void {
       WHERE id = 'claude:opus' AND cli_flag = 'claude-opus-4-7';
   `);
 
+  // Migration: disable the Fable 5 tier on already-seeded databases. The provider
+  // has turned Fable off upstream, so it stays listed in the UI but is marked
+  // not-selectable. The seed's INSERT OR IGNORE can't flip this on existing rows,
+  // so it's forced here on every boot while the outage lasts. When the provider
+  // restores Fable, remove this migration (and re-enable it in seed.ts).
+  db.exec(`
+    UPDATE models SET enabled = 0 WHERE id = 'claude:fable';
+  `);
+
   // ─── Attachments table ───
   db.exec(`
     CREATE TABLE IF NOT EXISTS attachments (
