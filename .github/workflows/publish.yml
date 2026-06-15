@@ -10,6 +10,11 @@ on:
         description: 'Existing tag to publish from (e.g. v1.0.0). Leave empty to publish HEAD of main.'
         required: false
         default: ''
+      dry_run:
+        description: 'Run every step except npm publish / release upload (validation only).'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -58,6 +63,7 @@ jobs:
           fi
 
       - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
         run: npm publish --access=public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
