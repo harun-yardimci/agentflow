@@ -20,7 +20,7 @@ function showNativeNotification(title: string, body: string): void {
   try {
     new Notification(title, {
       body,
-      icon: '/favicon.ico',
+      icon: '/icon-192.png',
       tag: `agentflow-${Date.now()}`,
     });
   } catch {
