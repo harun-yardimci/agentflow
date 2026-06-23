@@ -5,6 +5,20 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-06-23
+
+### Added
+
+- **Auth/session-expiry handling for CLI agents.** When a provider CLI
+  (Claude, Codex, or Gemini) returns an authentication or session-expiry error
+  (401, expired token, "please run /login"), the task no longer silently burns
+  its retries and fails along with its dependents. Such failures are now parked
+  in a new `auth_required` status without consuming a retry: the task surfaces
+  as blocked, emits a `task:auth_required` event with an actionable
+  Telegram/Slack notification, and waits for the user to re-login in their
+  terminal and manually retry. Detection uses conservative, failure-framed
+  patterns so ordinary agent output is not misclassified.
+
 ## [1.2.0] — 2026-06-15
 
 ### Added
