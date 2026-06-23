@@ -27,7 +27,7 @@ function getColumnTasks(tasks: Task[], colId: string): Task[] {
     case 'completed':
       return tasks.filter((t) => t.status === 'completed' || t.status === 'skipped');
     case 'blocked':
-      return tasks.filter((t) => t.status === 'blocked' || t.status === 'failed' || t.status === 'rejected');
+      return tasks.filter((t) => t.status === 'blocked' || t.status === 'failed' || t.status === 'rejected' || t.status === 'auth_required');
     default:
       return [];
   }

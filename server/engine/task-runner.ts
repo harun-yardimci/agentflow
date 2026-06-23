@@ -44,6 +44,7 @@ import { setMemory } from '../services/memory-service.js';
 import { runPreTaskHook, runPostTaskHook } from './task-hooks.js';
 import { parseCliOutput } from '../executor/output-parser.js';
 import { detectRateLimit, type RateLimitInfo } from './rate-limit-detector.js';
+import { detectAuthError, type AuthErrorInfo } from './auth-error-detector.js';
 import { parseSpawnDirectives, stripSpawnBlock } from './spawn-parser.js';
 import { deduplicateSpawnDirectives, getActiveTasks } from './spawn-dedup.js';
 import { extractQuestion, buildAllowResponse, buildDenyResponse, type ControlRequest } from '../executor/control-protocol.js';
@@ -1030,6 +1031,78 @@ export function holdTaskForRateLimit(opts: RateLimitHoldOpts): void {
   recalcPipelineStatus(task.pipeline_id);
 }
 
+export interface AuthHoldOpts {
+  task: TaskRow;
+  taskId: string;
+  cycleId: string;
+  runId: string;
+  provider: string;
+  attempt: number;
+  attemptNumber: number;
+  authError: AuthErrorInfo;
+  /** Original CLI error; kept in meta for diagnostics. */
+  errorMsg: string;
+  insertLog: { run: (...args: unknown[]) => void };
+}
+
+/**
+ * Park a task in `auth_required` without consuming a retry. Unlike a rate
+ * limit, there is no auto-resume timer — the provider session must be renewed
+ * by the user (e.g. `claude` / `codex login` / `gemini` auth in their
+ * terminal), after which they manually retry the task.
+ *
+ * Exported so the contract (retry_count NOT incremented, status set, event
+ * emitted) can be exercised in unit tests without driving the full
+ * `handleTaskFailure` surface.
+ */
+export function holdTaskForAuth(opts: AuthHoldOpts): void {
+  const {
+    task, taskId, cycleId, runId, provider,
+    attempt, attemptNumber, authError, errorMsg, insertLog,
+  } = opts;
+  const db = getDb();
+
+  // Keep resume_at NULL: the rate-limit resumer must not pick this up.
+  db.prepare(
+    'UPDATE tasks SET status = ?, resume_at = NULL, current_run_id = NULL WHERE id = ?',
+  ).run('auth_required', taskId);
+
+  // Reopen the cycle so a manual retry (after re-login) can run cleanly.
+  reopenCycle(cycleId);
+  setCycleStatus(cycleId, 'queued');
+
+  createConversationMessage({
+    taskId,
+    cycleId,
+    runId,
+    role: 'system',
+    messageType: 'event',
+    content: `Attempt #${attemptNumber} hit a ${provider} authentication/session error (matched: "${authError.matched}"). Re-login to ${provider} in your terminal, then retry this task.`,
+    agentId: task.agent_id,
+    provider,
+    modelUsed: task.model,
+    meta: {
+      attempt,
+      attemptNumber,
+      authRequired: true,
+      matched: authError.matched,
+      error: errorMsg.slice(0, 500),
+    },
+  });
+
+  insertLog.run(
+    task.pipeline_id, logTimestamp(), 'error',
+    `'${task.name}' needs re-auth — ${provider} session expired/invalid; re-login then retry`,
+  );
+
+  eventBus.emit('task:auth_required', {
+    taskId, pipelineId: task.pipeline_id, taskName: task.name,
+    status: 'auth_required', provider, matched: authError.matched,
+  });
+
+  recalcPipelineStatus(task.pipeline_id);
+}
+
 /**
  * Handle task failure with auto-retry support.
  * If auto_retry is enabled and retry_count < max_retries, re-enqueue with feedback.
@@ -1052,6 +1125,18 @@ async function handleTaskFailure(
   taskDurationMs: number,
   taskTokens: number,
 ): Promise<void> {
+  // Auth/session expiry: hold the task for manual retry instead of burning
+  // retries on a failure that only a re-login can fix. Checked before the
+  // rate-limit branch (the patterns are disjoint; this just makes intent clear).
+  const authError = isTimeout ? null : detectAuthError(errorMsg, provider);
+  if (authError) {
+    holdTaskForAuth({
+      task, taskId, cycleId, runId, provider,
+      attempt, attemptNumber, authError, errorMsg, insertLog,
+    });
+    return;
+  }
+
   // Provider-level rate limit: hold the task instead of consuming a retry.
   // The rate-limit resumer will flip it back to 'queued' once resume_at passes.
   const rateLimit = isTimeout ? null : detectRateLimit(errorMsg, provider);

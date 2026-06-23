@@ -216,7 +216,7 @@ export function startSingleTask(
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId) as TaskRow | undefined;
   if (!task) throw new Error(`Task not found: ${taskId}`);
 
-  const startableStates = new Set(['queued', 'blocked', 'failed', 'rejected']);
+  const startableStates = new Set(['queued', 'blocked', 'failed', 'rejected', 'auth_required']);
   if (!startableStates.has(task.status)) {
     throw new Error(`Task ${taskId} cannot be started (current: ${task.status})`);
   }
@@ -267,7 +267,7 @@ export function restartTaskFresh(taskId: string, model?: string, followUpPrompt?
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId) as (TaskRow & { iteration: number; max_iterations: number }) | undefined;
   if (!task) throw new Error(`Task not found: ${taskId}`);
 
-  const restartableStates = new Set(['blocked', 'failed', 'rejected', 'completed', 'queued']);
+  const restartableStates = new Set(['blocked', 'failed', 'rejected', 'completed', 'queued', 'auth_required']);
   if (!restartableStates.has(task.status)) {
     throw new Error(`Task ${taskId} cannot be restarted (current: ${task.status})`);
   }
@@ -340,7 +340,7 @@ export function retryTask(taskId: string, followUpPrompt?: string): void {
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId) as (TaskRow & { iteration: number; max_iterations: number }) | undefined;
   if (!task) throw new Error(`Task not found: ${taskId}`);
 
-  const retryableStates = new Set(['blocked', 'failed', 'rejected', 'completed', 'rate_limited']);
+  const retryableStates = new Set(['blocked', 'failed', 'rejected', 'completed', 'rate_limited', 'auth_required']);
   if (!retryableStates.has(task.status)) {
     throw new Error(`Task ${taskId} is not in a retryable state (current: ${task.status})`);
   }

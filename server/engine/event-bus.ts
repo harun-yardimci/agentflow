@@ -28,6 +28,7 @@ export interface EventMap {
   'task:spawned': TaskEvent & { sourceTaskId: string; spawnedCount: number };
   'task:rate_limited': TaskEvent & { resumeAt: string };
   'task:rate_limit_resumed': TaskEvent;
+  'task:auth_required': TaskEvent & { provider: string; matched: string };
   'pipeline:started': PipelineEvent;
   'pipeline:stage_advanced': PipelineEvent & { stage: number };
   'pipeline:completed': PipelineEvent;

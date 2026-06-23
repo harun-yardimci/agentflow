@@ -4,7 +4,7 @@ const PIPELINE_DESCRIPTION_MAX = 2000;
 const PIPELINE_RULES_MAX = 20000;
 const PIPELINE_WORKING_DIR_MAX = 500;
 
-export const TaskStatusEnum = z.enum(['queued', 'running', 'completed', 'blocked', 'awaiting_approval', 'failed', 'rejected', 'skipped', 'rate_limited']);
+export const TaskStatusEnum = z.enum(['queued', 'running', 'completed', 'blocked', 'awaiting_approval', 'failed', 'rejected', 'skipped', 'rate_limited', 'auth_required']);
 export const TaskTypeEnum = z.enum(['seeded', 'spawned', 'planned', 'system', 'routine']);
 export const ApprovalModeEnum = z.enum(['auto', 'manual', 'on_error']);
 /** Dynamic model key — validated as string, checked against DB at runtime */

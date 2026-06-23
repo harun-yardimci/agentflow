@@ -58,6 +58,7 @@ export const STATUS_COLOR: Record<TaskStatus, string> = {
   paused: '#F59E0B',
   skipped: '#64748B',
   rate_limited: '#06B6D4',
+  auth_required: '#A855F7',
 };
 
 

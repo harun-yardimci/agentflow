@@ -20,6 +20,7 @@ export function StatusPill({ status }: StatusPillProps) {
     paused: { label: 'paused', color: '#F59E0B', bg: '#261905', border: '#D97706' },
     skipped: { label: 'skipped', color: '#64748B', bg: '#111318', border: '#334155' },
     rate_limited: { label: 'rate limit', color: '#06B6D4', bg: '#081A1E', border: '#0891B2' },
+    auth_required: { label: 'auth', color: '#A855F7', bg: '#160B1F', border: '#7E22CE' },
     pending: { label: 'pending', color: '#D97706', bg: '#261905', border: '#D97706' },
     approved: { label: 'approved', color: '#16A34A', bg: '#0A1A11', border: '#15803D' },
   };

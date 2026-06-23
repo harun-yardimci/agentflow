@@ -2523,7 +2523,8 @@ export function TaskDrawer({
 
   const isCompleted = task.status === 'completed';
   const canFollowUp = isCompleted && onRetry;
-  const canRestartFresh = task.status === 'completed' || task.status === 'failed' || task.status === 'blocked' || task.status === 'rejected';
+  const needsReauth = task.status === 'auth_required';
+  const canRestartFresh = task.status === 'completed' || task.status === 'failed' || task.status === 'blocked' || task.status === 'rejected' || needsReauth;
   const canDraftFollowUp = canFollowUp || canRestartFresh || isRunning;
 
   const handleFollowUp = () => {
@@ -3027,6 +3028,13 @@ export function TaskDrawer({
             >
               Send
             </Button>
+          )}
+          {needsReauth && (
+            <div className="rounded border border-[#7E22CE] bg-[#160B1F] px-2 py-1.5 font-mono text-[10px] leading-snug text-[#C084FC]">
+              Provider session expired. Re-login in your terminal
+              (e.g. <code>claude</code> / <code>codex login</code> / <code>gemini</code>),
+              then retry.
+            </div>
           )}
           {!canFollowUp && canRestartFresh && !isRunning && onRetry && (
             <Button

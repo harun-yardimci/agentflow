@@ -27,7 +27,7 @@ export function statusToTone(
   if (status === 'running') return 'active';
   if (status === 'completed') return 'success';
   if (status === 'awaiting_approval' || status === 'paused') return 'warning';
-  if (status === 'blocked' || status === 'failed' || status === 'rejected')
+  if (status === 'blocked' || status === 'failed' || status === 'rejected' || status === 'auth_required')
     return 'error';
   return 'idle';
 }

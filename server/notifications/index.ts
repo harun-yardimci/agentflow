@@ -8,6 +8,7 @@ import { sendSlackMessage } from './slack.js';
 const NOTIFY_EVENTS = [
   'task:completed',
   'task:failed',
+  'task:auth_required',
   'task:blocked',
   'task:approval_needed',
   'pipeline:completed',
@@ -73,6 +74,13 @@ export function formatMessage(event: NotifyEvent, data: EventMap[NotifyEvent & k
       return {
         emoji: '\u274c',
         text: `Task "${d.taskName}" failed\n\u2022 Attempt: ${d.attempt}\n\u2022 Error: ${d.error.slice(0, 200)}`,
+      };
+    }
+    case 'task:auth_required': {
+      const d = data as EventMap['task:auth_required'];
+      return {
+        emoji: '🔑',
+        text: `Task "${d.taskName}" needs re-auth\n• Provider: ${d.provider}\n• ${d.provider} session expired/invalid — re-login in your terminal, then retry the task`,
       };
     }
     case 'task:blocked': {

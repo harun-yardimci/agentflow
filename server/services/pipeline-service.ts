@@ -84,7 +84,9 @@ function computePipelineStatus(tasks: TaskRow[]): string {
   if (tasks.length === 0) return 'queued';
   if (tasks.every((t) => t.status === 'completed' || t.status === 'skipped')) return 'completed';
   if (tasks.some((t) => t.status === 'running' || t.status === 'awaiting_approval')) return 'running';
-  if (tasks.some((t) => t.status === 'blocked' || t.status === 'failed' || t.status === 'rejected')) return 'blocked';
+  // `auth_required` surfaces as blocked: the pipeline is stalled on a human
+  // re-login (provider session expired), not an external clock like rate limit.
+  if (tasks.some((t) => t.status === 'blocked' || t.status === 'failed' || t.status === 'rejected' || t.status === 'auth_required')) return 'blocked';
   // `rate_limited` intentionally falls through to 'queued': the pipeline is
   // waiting on an external clock (provider reset window), not actively
   // running and not user-blocked. Task-level pill still surfaces the state.

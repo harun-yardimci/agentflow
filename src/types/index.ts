@@ -1,4 +1,4 @@
-export type TaskStatus = 'queued' | 'running' | 'completed' | 'blocked' | 'awaiting_approval' | 'failed' | 'rejected' | 'paused' | 'skipped' | 'rate_limited';
+export type TaskStatus = 'queued' | 'running' | 'completed' | 'blocked' | 'awaiting_approval' | 'failed' | 'rejected' | 'paused' | 'skipped' | 'rate_limited' | 'auth_required';
 export type TaskType = 'seeded' | 'spawned' | 'planned' | 'system' | 'routine';
 export type ScheduleKind = 'hourly' | 'daily' | 'weekly';
 export type ApprovalMode = 'auto' | 'manual' | 'on_error';
