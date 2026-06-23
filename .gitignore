@@ -22,3 +22,6 @@ dist-server/
 # Design tooling (kept locally, not part of the public source tree)
 *.pen
 agent-dashboard_2.jsx
+
+# Internal marketing / site content — kept local, never published
+.agents/
