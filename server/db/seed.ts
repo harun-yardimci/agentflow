@@ -6,11 +6,11 @@ const AGENTS = [
   { id: 'product',   name: 'Compass',         title: 'Product Owner',        icon: '📋', avatar_seed: 'Compass',   default_model: 'claude:sonnet', prompt: 'You are an experienced product manager. Create a concise PRD with user stories, feature priorities, and success metrics.' },
   { id: 'architect', name: 'Atlas',           title: 'Systems Architect',    icon: '🏗️', avatar_seed: 'Atlas',     default_model: 'claude:sonnet', prompt: 'You are a software architect. Design system architecture, choose appropriate tech stack, define API contracts and database schemas.' },
   { id: 'designer',  name: 'Pixel',           title: 'UI/UX Designer',       icon: '🎨', avatar_seed: 'Pixel',     default_model: 'claude:sonnet', prompt: 'You are a UI/UX designer. Create detailed design specifications including component hierarchy, color system, and interaction patterns.' },
-  { id: 'developer', name: 'Forge',           title: 'Senior Developer',     icon: '💻', avatar_seed: 'Forge',     default_model: 'codex:codex-1', prompt: 'You are a senior full-stack developer. Write production-ready code based on the design spec. Include error handling and tests.' },
+  { id: 'developer', name: 'Forge',           title: 'Senior Developer',     icon: '💻', avatar_seed: 'Forge',     default_model: 'codex:gpt-5.6-sol', prompt: 'You are a senior full-stack developer. Write production-ready code based on the design spec. Include error handling and tests.' },
   { id: 'seo',       name: 'Beacon',          title: 'SEO Specialist',       icon: '📈', avatar_seed: 'Beacon',    default_model: 'gemini:2.5-pro', prompt: 'You are an SEO specialist. Optimize content for search engines: meta tags, structured data, keyword placement.' },
   { id: 'content',   name: 'Quill',           title: 'Content Writer',       icon: '✍️', avatar_seed: 'Quill',     default_model: 'gemini:2.5-flash', prompt: 'You are a copywriter. Write compelling, conversion-focused content. Match brand voice and include CTAs.' },
   { id: 'qa',        name: 'Sentinel',        title: 'QA Engineer',          icon: '🧪', avatar_seed: 'Sentinel',  default_model: 'claude:sonnet', prompt: 'You are a QA engineer. Review outputs for quality, consistency, and correctness. Identify issues and suggest improvements.' },
-  { id: 'deploy',    name: 'Rocket',          title: 'DevOps Engineer',      icon: '🚀', avatar_seed: 'Rocket',    default_model: 'codex:codex-1', prompt: 'You are a DevOps engineer. Handle deployment pipeline: build, test, deploy to staging then production.' },
+  { id: 'deploy',    name: 'Rocket',          title: 'DevOps Engineer',      icon: '🚀', avatar_seed: 'Rocket',    default_model: 'codex:gpt-5.6-sol', prompt: 'You are a DevOps engineer. Handle deployment pipeline: build, test, deploy to staging then production.' },
 ];
 
 const PROVIDERS = [
@@ -33,10 +33,14 @@ const MODEL_DEFS = [
   { id: 'claude:haiku',       provider: 'claude', label: 'Claude Haiku',             color: '#D97706', bg: '#1C1208', cost_per_1k: 0.001, cli_flag: 'claude-haiku-4-5-20251001', sort_order: 4 },
   { id: 'gemini:2.5-pro',  provider: 'gemini', label: 'Gemini 2.5 Pro',  color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.00125, cli_flag: 'gemini-2.5-pro',   sort_order: 0 },
   { id: 'gemini:2.5-flash', provider: 'gemini', label: 'Gemini 2.5 Flash', color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.0003, cli_flag: 'gemini-2.5-flash', sort_order: 1 },
-  { id: 'codex:codex-1',  provider: 'codex', label: 'Codex 1',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.020, cli_flag: 'codex-1',  sort_order: 0 },
-  { id: 'codex:gpt-5.4', provider: 'codex', label: 'GPT 5.4',      color: '#22C55E', bg: '#071710', cost_per_1k: 0.010, cli_flag: 'gpt-5.4', sort_order: 1 },
-  { id: 'codex:o4-mini',  provider: 'codex', label: 'o4 Mini',      color: '#22C55E', bg: '#071710', cost_per_1k: 0.005, cli_flag: 'o4-mini',  sort_order: 2 },
-  { id: 'codex:o3',      provider: 'codex', label: 'o3',            color: '#22C55E', bg: '#071710', cost_per_1k: 0.020, cli_flag: 'o3',       sort_order: 3 },
+  // The 5.6 variants are Codex product tiers rather than public API SKUs, so no
+  // token price is assigned. The public GPT models use their output-token rate.
+  { id: 'codex:gpt-5.6-sol',   provider: 'codex', label: 'GPT 5.6 Sol',   color: '#22C55E', bg: '#071710', cost_per_1k: 0,      cli_flag: 'gpt-5.6-sol',   sort_order: 0 },
+  { id: 'codex:gpt-5.6-terra', provider: 'codex', label: 'GPT 5.6 Terra', color: '#22C55E', bg: '#071710', cost_per_1k: 0,      cli_flag: 'gpt-5.6-terra', sort_order: 1 },
+  { id: 'codex:gpt-5.6-luna',  provider: 'codex', label: 'GPT 5.6 Luna',  color: '#22C55E', bg: '#071710', cost_per_1k: 0,      cli_flag: 'gpt-5.6-luna',  sort_order: 2 },
+  { id: 'codex:gpt-5.5',       provider: 'codex', label: 'GPT 5.5',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.030,  cli_flag: 'gpt-5.5',       sort_order: 3 },
+  { id: 'codex:gpt-5.4',       provider: 'codex', label: 'GPT 5.4',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.015,  cli_flag: 'gpt-5.4',       sort_order: 4 },
+  { id: 'codex:gpt-5.4-mini',  provider: 'codex', label: 'GPT 5.4 Mini',  color: '#22C55E', bg: '#071710', cost_per_1k: 0.0045, cli_flag: 'gpt-5.4-mini',  sort_order: 5 },
   // Antigravity (`agy`) exposes the Gemini 3 family. NOTE: this agy build's `--model`
   // accepts only backend-defined model ids that aren't locally enumerable; unknown
   // flags fall back silently to the account default (Gemini 3.5 Flash). These slugs
@@ -89,7 +93,24 @@ export function seedDatabase(db: Database.Database): void {
     insertModel.run(m.id, m.provider, m.label, m.color, m.bg, m.cost_per_1k, m.cli_flag, m.sort_order, m.enabled ?? 1);
   }
 
+  const syncCodexModel = db.prepare(`
+    UPDATE models
+      SET label = ?, color = ?, bg = ?, cost_per_1k = ?, cli_flag = ?, sort_order = ?
+      WHERE id = ? AND provider = 'codex'
+  `);
+  for (const m of MODEL_DEFS) {
+    if (m.provider === 'codex') {
+      syncCodexModel.run(m.label, m.color, m.bg, m.cost_per_1k, m.cli_flag, m.sort_order, m.id);
+    }
+  }
+
   backfillUsageMetrics(db);
+
+  // Remove only the superseded built-in Codex entries after legacy usage has
+  // frozen its historical labels and pricing. User-created models stay intact.
+  db.prepare(
+    "DELETE FROM models WHERE id IN ('codex:codex-1', 'codex:o4-mini', 'codex:o3')",
+  ).run();
 
   // Seed the starter crew (Scout, Compass, Atlas, ...) on first run only.
   // No demo pipelines — a fresh install opens an empty board.

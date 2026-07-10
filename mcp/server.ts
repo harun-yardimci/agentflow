@@ -71,7 +71,7 @@ export function createMcpServer(): McpServer {
       tasks: z.array(z.object({
         name: z.string(),
         agentId: z.string(),
-        model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:codex-1)'),
+        model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:gpt-5.6-sol)'),
         approval: z.enum(['auto', 'manual', 'on_error']).default('auto'),
         stage: z.number(),
         dependsOn: z.array(z.string()),
@@ -115,7 +115,7 @@ export function createMcpServer(): McpServer {
       pipelineId: z.string().describe('Pipeline ID'),
       name: z.string().describe('Task name'),
       agentId: z.string().describe('Agent ID'),
-      model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:codex-1)').default('claude:sonnet'),
+      model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:gpt-5.6-sol)').default('claude:sonnet'),
       approval: z.enum(['auto', 'manual', 'on_error']).default('auto'),
       stage: z.number().default(0).describe('Stage/run order (0-based)'),
       dependsOn: z.array(z.union([
@@ -239,7 +239,7 @@ export function createMcpServer(): McpServer {
       id: z.string().describe('Agent ID'),
       name: z.string().optional(),
       icon: z.string().optional(),
-      defaultModel: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:codex-1)').optional(),
+      defaultModel: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:gpt-5.6-sol)').optional(),
       prompt: z.string().optional(),
     },
     async ({ id, ...update }) => {
@@ -446,7 +446,7 @@ export function createMcpServer(): McpServer {
       taskId: z.string().describe('Task ID'),
       name: z.string().optional().describe('Task name'),
       agentId: z.string().optional().describe('Agent ID'),
-      model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:codex-1)').optional(),
+      model: z.string().describe('Model key (e.g. claude:sonnet, gemini:2.5-pro, codex:gpt-5.6-sol)').optional(),
       approval: z.enum(['auto', 'manual', 'on_error']).optional(),
       stage: z.number().optional().describe('Stage/run order (0-based)'),
       input: z.string().optional().describe('Input prompt'),

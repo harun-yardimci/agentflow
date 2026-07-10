@@ -76,11 +76,11 @@ export const AGENT_TEMPLATES: Agent[] = [
   { id: 'product',   name: 'Compass',   title: 'Product Owner',      avatarSeed: 'Compass',  defaultModel: 'claude:sonnet', icon: '\uD83D\uDCCB', prompt: 'You are an experienced product manager. Create a concise PRD with user stories, feature priorities, and success metrics.' },
   { id: 'architect', name: 'Atlas',     title: 'Systems Architect',  avatarSeed: 'Atlas',    defaultModel: 'claude:sonnet', icon: '\uD83C\uDFD7\uFE0F', prompt: 'You are a software architect. Design system architecture, choose appropriate tech stack, define API contracts and database schemas.' },
   { id: 'designer',  name: 'Pixel',     title: 'UI/UX Designer',     avatarSeed: 'Pixel',    defaultModel: 'claude:sonnet', icon: '\uD83C\uDFA8', prompt: 'You are a UI/UX designer. Create detailed design specifications including component hierarchy, color system, and interaction patterns.' },
-  { id: 'developer', name: 'Forge',     title: 'Senior Developer',   avatarSeed: 'Forge',    defaultModel: 'codex:codex-1', icon: '\uD83D\uDCBB', prompt: 'You are a senior full-stack developer. Write production-ready code based on the design spec. Include error handling and tests.' },
+  { id: 'developer', name: 'Forge',     title: 'Senior Developer',   avatarSeed: 'Forge',    defaultModel: 'codex:gpt-5.6-sol', icon: '\uD83D\uDCBB', prompt: 'You are a senior full-stack developer. Write production-ready code based on the design spec. Include error handling and tests.' },
   { id: 'seo',       name: 'Beacon',    title: 'SEO Specialist',     avatarSeed: 'Beacon',   defaultModel: 'gemini:2.5-pro', icon: '\uD83D\uDCC8', prompt: 'You are an SEO specialist. Optimize content for search engines: meta tags, structured data, keyword placement.' },
   { id: 'content',   name: 'Quill',     title: 'Content Writer',     avatarSeed: 'Quill',    defaultModel: 'gemini:2.5-flash', icon: '\u270D\uFE0F', prompt: 'You are a copywriter. Write compelling, conversion-focused content. Match brand voice and include CTAs.' },
   { id: 'qa',        name: 'Sentinel',  title: 'QA Engineer',        avatarSeed: 'Sentinel', defaultModel: 'claude:sonnet', icon: '\uD83E\uDDEA', prompt: 'You are a QA engineer. Review outputs for quality, consistency, and correctness. Identify issues and suggest improvements.' },
-  { id: 'deploy',    name: 'Rocket',    title: 'DevOps Engineer',    avatarSeed: 'Rocket',   defaultModel: 'codex:codex-1', icon: '\uD83D\uDE80', prompt: 'You are a DevOps engineer. Handle deployment pipeline: build, test, deploy to staging then production.' },
+  { id: 'deploy',    name: 'Rocket',    title: 'DevOps Engineer',    avatarSeed: 'Rocket',   defaultModel: 'codex:gpt-5.6-sol', icon: '\uD83D\uDE80', prompt: 'You are a DevOps engineer. Handle deployment pipeline: build, test, deploy to staging then production.' },
 ];
 
 /** Preset avatar seeds for the avatar picker */
@@ -93,7 +93,7 @@ export const AVATAR_SEED_PRESETS = [
 ];
 
 export const ROUTING_RULES: RoutingRule[] = [
-  { condition: 'Task type: code generation',             model: 'codex:codex-1',    reason: 'Best code quality + speed' },
+  { condition: 'Task type: code generation',             model: 'codex:gpt-5.6-sol', reason: 'Latest frontier agentic coding model' },
   { condition: 'Task type: research / web search',       model: 'gemini:2.5-pro',  reason: 'Grounding + current data' },
   { condition: 'Task type: architecture & reasoning',    model: 'claude:sonnet',    reason: 'Long context + deep analysis' },
   { condition: 'Task type: bulk content writing',        model: 'gemini:2.5-flash', reason: 'Cost-effective, fast' },

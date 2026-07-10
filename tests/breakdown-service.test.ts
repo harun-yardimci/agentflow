@@ -95,7 +95,7 @@ describe('breakdown-service', () => {
       'developer',
       'Forge',
       '💻',
-      'codex:codex-1',
+      'codex:gpt-5.6-sol',
       'Write production-ready code.',
     );
 

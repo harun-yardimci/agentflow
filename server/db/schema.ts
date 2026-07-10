@@ -705,13 +705,16 @@ export function createTables(db: Database.Database): void {
   db.exec(`
     UPDATE tasks SET model = 'claude:sonnet' WHERE model = 'claude';
     UPDATE tasks SET model = 'gemini:2.5-pro' WHERE model = 'gemini';
-    UPDATE tasks SET model = 'codex:codex-1' WHERE model = 'codex';
-    UPDATE tasks SET model = 'codex:codex-1' WHERE model = 'codex:gpt-4o';
-    UPDATE tasks SET model = 'codex:o3' WHERE model = 'codex:o1';
+    UPDATE tasks SET model = 'codex:gpt-5.6-sol'
+      WHERE model IN ('codex', 'codex:gpt-4o', 'codex:codex-1');
+    UPDATE tasks SET model = 'codex:gpt-5.6-luna'
+      WHERE model IN ('codex:o1', 'codex:o3', 'codex:o4-mini');
     UPDATE agents SET default_model = 'claude:sonnet' WHERE default_model = 'claude';
     UPDATE agents SET default_model = 'gemini:2.5-pro' WHERE default_model = 'gemini';
-    UPDATE agents SET default_model = 'codex:codex-1' WHERE default_model = 'codex';
-    UPDATE agents SET default_model = 'codex:codex-1' WHERE default_model = 'codex:gpt-4o';
+    UPDATE agents SET default_model = 'codex:gpt-5.6-sol'
+      WHERE default_model IN ('codex', 'codex:gpt-4o', 'codex:codex-1');
+    UPDATE agents SET default_model = 'codex:gpt-5.6-luna'
+      WHERE default_model IN ('codex:o1', 'codex:o3', 'codex:o4-mini');
   `);
 
   // Migration: promote claude:opus to the latest version (4.8) on already-seeded
@@ -875,6 +878,11 @@ export function createTables(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_routines_pipeline ON routines(pipeline_id);
     CREATE INDEX IF NOT EXISTS idx_routines_due ON routines(next_trigger_at) WHERE enabled = 1;
+
+    UPDATE routines SET model = 'codex:gpt-5.6-sol'
+      WHERE model IN ('codex', 'codex:gpt-4o', 'codex:codex-1');
+    UPDATE routines SET model = 'codex:gpt-5.6-luna'
+      WHERE model IN ('codex:o1', 'codex:o3', 'codex:o4-mini');
   `);
 
   // Migration: link routine-spawned tasks back to their routine for UI filtering.
