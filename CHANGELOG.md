@@ -5,6 +5,32 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] — 2026-07-28
+
+### Changed
+
+- **Claude Opus 5 added; Opus tiers shifted.** `claude:opus` now runs
+  `claude-opus-5`, and the previous version (4.8) moves down to the
+  `claude:opus-legacy` tier so it stays selectable. Existing databases are
+  migrated in place; the flags are only rewritten when they still hold the
+  outgoing value, so custom picks are preserved.
+- **Claude Fable 5 re-enabled.** The provider-side outage is over, so Fable is
+  selectable again. Databases disabled by the outage migration are restored
+  once; Fable is not forced back on if it is later disabled from the UI.
+
+## [1.3.0] — 2026-07-10
+
+### Changed
+
+- **Codex model catalog refreshed.** The `codex-1` / `o3` / `o4-mini` tiers are
+  replaced by the GPT 5.6 variants (Sol, Terra, Luna) plus GPT 5.5, 5.4, and
+  5.4 Mini. The 5.6 tiers are Codex product tiers rather than public API SKUs,
+  so they carry no token price. Existing tasks and agents pointing at the
+  retired ids are migrated to `codex:gpt-5.6-sol` / `codex:gpt-5.6-luna`.
+- **App icon and notifications.** The placeholder favicon is replaced by the
+  AgentFlow mark, and native notifications now point at a real `icon-192.png`
+  instead of a `/favicon.ico` that never existed.
+
 ## [1.2.1] — 2026-06-23
 
 ### Added

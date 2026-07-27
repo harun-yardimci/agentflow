@@ -728,14 +728,29 @@ export function createTables(db: Database.Database): void {
       WHERE id = 'claude:opus' AND cli_flag = 'claude-opus-4-7';
   `);
 
-  // Migration: disable the Fable 5 tier on already-seeded databases. The provider
-  // has turned Fable off upstream, so it stays listed in the UI but is marked
-  // not-selectable. The seed's INSERT OR IGNORE can't flip this on existing rows,
-  // so it's forced here on every boot while the outage lasts. When the provider
-  // restores Fable, remove this migration (and re-enable it in seed.ts).
+  // Migration: promote claude:opus to Opus 5 and shift the previous version (4.8)
+  // down to the opus-legacy tier. Both updates are guarded on the outgoing flag so
+  // they run once and never clobber a value the user picked. Databases that never
+  // saw the legacy tier get its row from the seed's INSERT OR IGNORE loop.
   db.exec(`
-    UPDATE models SET enabled = 0 WHERE id = 'claude:fable';
+    UPDATE models
+      SET cli_flag = 'claude-opus-4-8', label = 'Claude Opus 4.8 (Legacy)'
+      WHERE id = 'claude:opus-legacy' AND cli_flag = 'claude-opus-4-7';
+    UPDATE models
+      SET cli_flag = 'claude-opus-5', label = 'Claude Opus 5'
+      WHERE id = 'claude:opus' AND cli_flag = 'claude-opus-4-8';
   `);
+
+  // Migration: re-enable the Fable 5 tier — the upstream outage that forced it off
+  // is over. This runs exactly once (guarded by a settings marker) so it restores
+  // databases that were disabled by the outage migration without overriding a user
+  // who later turns Fable off themselves.
+  const fableRestored = db.prepare(
+    "INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_fable_reenabled', '1')"
+  ).run();
+  if (fableRestored.changes > 0) {
+    db.exec("UPDATE models SET enabled = 1 WHERE id = 'claude:fable'");
+  }
 
   // ─── Attachments table ───
   db.exec(`
