@@ -333,15 +333,16 @@ function discoverGeminiModels(): DiscoveredModel[] {
 
 // ─── Antigravity Discovery ───
 
-// agy's `models` subcommand needs a TTY and its backend-defined model ids are not
-// locally enumerable, so discovery is presence-based: if the binary is installed we
-// report the known Gemini 3 family; if not, we return nothing so the empty-result
-// guard in discoverModels() skips the sync and the seeded defaults are preserved.
+// Keep discovery presence-based and mirror the supported Gemini families. agy's
+// model slugs include reasoning effort, while AgentFlow exposes one entry per family.
+// Use the highest-effort variant and newest-first order so 3.7 is the default.
 function discoverAntigravityModels(): DiscoveredModel[] {
   if (!which('agy')) return [];
   return [
-    { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   cliFlag: 'gemini-3.1-pro',   sortOrder: 0 },
-    { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', cliFlag: 'gemini-3.5-flash', sortOrder: 1 },
+    { id: 'antigravity:gemini-3.7-flash', provider: 'antigravity', label: 'Gemini 3.7 Flash', cliFlag: 'gemini-3.7-flash-high', sortOrder: 0 },
+    { id: 'antigravity:gemini-3.6-flash', provider: 'antigravity', label: 'Gemini 3.6 Flash', cliFlag: 'gemini-3.6-flash-high', sortOrder: 1 },
+    { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', cliFlag: 'gemini-3.5-flash-high', sortOrder: 2 },
+    { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   cliFlag: 'gemini-3.1-pro-high', sortOrder: 3 },
   ];
 }
 

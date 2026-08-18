@@ -268,7 +268,7 @@ function getRepairModel(model: string): string {
     case 'codex':
       return 'codex:gpt-5.6-luna';
     case 'antigravity':
-      return 'antigravity:gemini-3.5-flash';
+      return 'antigravity:gemini-3.7-flash';
     default:
       return model;
   }

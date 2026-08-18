@@ -5,6 +5,16 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] — 2026-08-18
+
+### Changed
+
+- **Gemini 3.7 Flash added to Antigravity.** Gemini 3.7 Flash is now the
+  default Antigravity model, with Gemini 3.6 Flash added alongside the existing
+  3.5 Flash and 3.1 Pro choices. AgentFlow maps the concise UI choices to
+  Antigravity's highest-effort CLI slugs (for example,
+  `gemini-3.7-flash-high`) and updates existing seeded model records in place.
+
 ## [1.3.1] — 2026-07-28
 
 ### Changed

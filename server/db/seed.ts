@@ -52,12 +52,13 @@ const MODEL_DEFS: ModelDef[] = [
   { id: 'codex:gpt-5.5',       provider: 'codex', label: 'GPT 5.5',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.030,  cli_flag: 'gpt-5.5',       sort_order: 3 },
   { id: 'codex:gpt-5.4',       provider: 'codex', label: 'GPT 5.4',       color: '#22C55E', bg: '#071710', cost_per_1k: 0.015,  cli_flag: 'gpt-5.4',       sort_order: 4 },
   { id: 'codex:gpt-5.4-mini',  provider: 'codex', label: 'GPT 5.4 Mini',  color: '#22C55E', bg: '#071710', cost_per_1k: 0.0045, cli_flag: 'gpt-5.4-mini',  sort_order: 5 },
-  // Antigravity (`agy`) exposes the Gemini 3 family. NOTE: this agy build's `--model`
-  // accepts only backend-defined model ids that aren't locally enumerable; unknown
-  // flags fall back silently to the account default (Gemini 3.5 Flash). These slugs
-  // are best-effort and degrade gracefully until Google stabilizes the `--model` ids.
-  { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.1-pro',   sort_order: 0 },
-  { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.5-flash', sort_order: 1 },
+  // Antigravity (`agy`) model slugs include the reasoning effort. Keep one clear
+  // UI entry per model family and use the highest-effort variant for execution.
+  // Newest-first ordering also makes Gemini 3.7 Flash the provider default.
+  { id: 'antigravity:gemini-3.7-flash', provider: 'antigravity', label: 'Gemini 3.7 Flash', color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.7-flash-high', sort_order: 0 },
+  { id: 'antigravity:gemini-3.6-flash', provider: 'antigravity', label: 'Gemini 3.6 Flash', color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.6-flash-high', sort_order: 1 },
+  { id: 'antigravity:gemini-3.5-flash', provider: 'antigravity', label: 'Gemini 3.5 Flash', color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.5-flash-high', sort_order: 2 },
+  { id: 'antigravity:gemini-3.1-pro',   provider: 'antigravity', label: 'Gemini 3.1 Pro',   color: '#8B5CF6', bg: '#120A20', cost_per_1k: 0, cli_flag: 'gemini-3.1-pro-high',   sort_order: 3 },
 ];
 
 const DEFAULT_SETTINGS = [
@@ -104,14 +105,14 @@ export function seedDatabase(db: Database.Database): void {
     insertModel.run(m.id, m.provider, m.label, m.color, m.bg, m.cost_per_1k, m.cli_flag, m.sort_order, m.enabled ?? 1);
   }
 
-  const syncCodexModel = db.prepare(`
+  const syncBuiltInModel = db.prepare(`
     UPDATE models
       SET label = ?, color = ?, bg = ?, cost_per_1k = ?, cli_flag = ?, sort_order = ?
-      WHERE id = ? AND provider = 'codex'
+      WHERE id = ? AND provider = ?
   `);
   for (const m of MODEL_DEFS) {
-    if (m.provider === 'codex') {
-      syncCodexModel.run(m.label, m.color, m.bg, m.cost_per_1k, m.cli_flag, m.sort_order, m.id);
+    if (m.provider === 'codex' || m.provider === 'antigravity') {
+      syncBuiltInModel.run(m.label, m.color, m.bg, m.cost_per_1k, m.cli_flag, m.sort_order, m.id, m.provider);
     }
   }
 

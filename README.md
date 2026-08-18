@@ -84,7 +84,7 @@ Install at least one of these tools before running pipelines:
 - Gemini CLI: `npm install -g @google/gemini-cli`
 - Antigravity CLI (`agy`): Google's successor to the Gemini CLI — see [antigravity.google](https://antigravity.google). The Gemini CLI stops serving free/Google One tiers on June 18, 2026; `agy` is the migration path.
 
-> **Antigravity note:** `agy` emits plain-text output only (no token/cost metrics), and this build's `--model` flag accepts only Google's backend-defined model ids — unrecognized values fall back to the account default. AgentFlow seeds the Gemini 3 family best-effort; model switching firms up as Google stabilizes those ids.
+> **Antigravity note:** `agy` emits plain-text output only (no token/cost metrics). Its `--model` values include a reasoning-effort suffix; AgentFlow presents one entry per Gemini family and executes the highest-effort variant (for example, `gemini-3.7-flash-high`).
 
 ## Development Commands
 

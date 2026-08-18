@@ -31,6 +31,10 @@ describe('Model Discovery', () => {
       INSERT INTO providers (id, label, color, bg, cli_command, sort_order, enabled)
       VALUES ('codex', 'Codex', '#22C55E', '#071710', 'codex', 2, 1)
     `).run();
+    db.prepare(`
+      INSERT INTO providers (id, label, color, bg, cli_command, sort_order, enabled)
+      VALUES ('antigravity', 'Antigravity', '#8B5CF6', '#120A20', 'agy', 3, 1)
+    `).run();
 
     execSyncMock.mockReset();
     readFileSyncMock.mockReset();
@@ -99,6 +103,35 @@ describe('Model Discovery', () => {
         cli_flag: 'gpt-5.4',
         sort_order: 1,
       },
+    ]);
+  });
+
+  it('discovers Gemini 3.7 as the default Antigravity model without removing older families', async () => {
+    execSyncMock.mockImplementation((cmd) => cmd === 'which agy' ? '/usr/local/bin/agy' : '');
+
+    const results = await discoverModels('antigravity');
+    const models = db.prepare(
+      'SELECT id, cli_flag, sort_order FROM models WHERE provider = ? ORDER BY sort_order ASC'
+    ).all('antigravity');
+
+    expect(results).toEqual([
+      {
+        provider: 'antigravity',
+        added: [
+          'antigravity:gemini-3.7-flash',
+          'antigravity:gemini-3.6-flash',
+          'antigravity:gemini-3.5-flash',
+          'antigravity:gemini-3.1-pro',
+        ],
+        updated: [],
+        removed: [],
+      },
+    ]);
+    expect(models).toEqual([
+      { id: 'antigravity:gemini-3.7-flash', cli_flag: 'gemini-3.7-flash-high', sort_order: 0 },
+      { id: 'antigravity:gemini-3.6-flash', cli_flag: 'gemini-3.6-flash-high', sort_order: 1 },
+      { id: 'antigravity:gemini-3.5-flash', cli_flag: 'gemini-3.5-flash-high', sort_order: 2 },
+      { id: 'antigravity:gemini-3.1-pro', cli_flag: 'gemini-3.1-pro-high', sort_order: 3 },
     ]);
   });
 });
