@@ -34,8 +34,15 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
+          # npm's guidance for release builds: publish from a clean install.
+          package-manager-cache: false
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm for trusted publishing
+        # Trusted publishing needs npm >= 11.5.1 (and Node >= 22.14). Node 22
+        # still ships npm 10.x, so the runner's npm is upgraded before anything
+        # else runs — one npm for install, pack and publish.
+        run: npm install -g npm@^11.5.1
 
       - name: Install dependencies
         run: npm ci
@@ -52,11 +59,32 @@ jobs:
       - name: Verify package contents
         run: npm pack --dry-run
 
+      - name: Resolve release tag
+        id: release
+        # A tag push carries the tag in github.ref; a manual run passes it as an
+        # input and github.ref is main. Both paths need the version check and the
+        # GitHub Release, so they are normalised into one value here. Empty means
+        # "not a release" (a manual run with no tag), and both steps skip.
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          TAG="$INPUT_TAG"
+          if [ -z "$TAG" ] && [ "$GITHUB_REF_TYPE" = 'tag' ]; then
+            TAG="$GITHUB_REF_NAME"
+          fi
+          case "$TAG" in
+            v*) ;;
+            *) TAG='' ;;
+          esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Confirm version matches tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.release.outputs.tag != ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_VERSION="${TAG#v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
@@ -64,9 +92,10 @@ jobs:
 
       - name: Publish to npm
         if: ${{ !inputs.dry_run }}
-        run: npm publish --access=public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Trusted publishing (OIDC) — the id-token permission above is the whole
+        # credential, so there is no NPM_TOKEN to expire or leak. Provenance is
+        # attached automatically; --provenance is only for token-based publishes.
+        run: npm publish --access=public
 
       - name: Pack tarball for release upload
         id: pack
@@ -76,8 +105,9 @@ jobs:
           echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
 
       - name: Attach tarball to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: ${{ steps.release.outputs.tag != '' && !inputs.dry_run }}
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.release.outputs.tag }}
           files: ${{ steps.pack.outputs.tarball }}
           fail_on_unmatched_files: true
