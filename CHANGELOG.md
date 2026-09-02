@@ -5,6 +5,19 @@ All notable changes to AgentFlow are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AgentFlow adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] — 2026-09-02
+
+### Changed
+
+- **Claude Fable 5.1 added; Fable tiers shifted.** `claude:fable` now runs
+  `claude-fable-5-1`, and the previous version (5) moves down to the new
+  `claude:fable-legacy` tier so it stays selectable — the same rollover the
+  Opus tiers use. Existing databases are migrated in place: the flag is only
+  rewritten while it still holds `claude-fable-5`, and the sort order of the
+  other Claude models is only shifted where it still matches the seeded
+  default, so custom picks and hand-reordered lists are preserved. CLI model
+  discovery now derives a `-legacy` tier for Fable as well as Opus.
+
 ## [1.3.2] — 2026-08-18
 
 ### Changed

@@ -35,13 +35,14 @@ interface ModelDef {
 }
 
 const MODEL_DEFS: ModelDef[] = [
-  // Fable 5 is the flagship tier — sits above Opus, for the hardest problems.
-  // Announced pricing: $10 / 1M input, $50 / 1M output.
-  { id: 'claude:fable',       provider: 'claude', label: 'Claude Fable 5',           color: '#D97706', bg: '#1C1208', cost_per_1k: 0.050, cli_flag: 'claude-fable-5',           sort_order: 0 },
-  { id: 'claude:sonnet', provider: 'claude', label: 'Claude Sonnet', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.015, cli_flag: 'claude-sonnet-4-6',           sort_order: 1 },
-  { id: 'claude:opus',        provider: 'claude', label: 'Claude Opus 5',            color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-5',             sort_order: 2 },
-  { id: 'claude:opus-legacy', provider: 'claude', label: 'Claude Opus 4.8 (Legacy)', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-8',           sort_order: 3 },
-  { id: 'claude:haiku',       provider: 'claude', label: 'Claude Haiku',             color: '#D97706', bg: '#1C1208', cost_per_1k: 0.001, cli_flag: 'claude-haiku-4-5-20251001', sort_order: 4 },
+  // Fable is the flagship tier — sits above Opus, for the hardest problems.
+  // Announced pricing: $10 / 1M input, $50 / 1M output (unchanged for 5.1).
+  { id: 'claude:fable',        provider: 'claude', label: 'Claude Fable 5.1',         color: '#D97706', bg: '#1C1208', cost_per_1k: 0.050, cli_flag: 'claude-fable-5-1',          sort_order: 0 },
+  { id: 'claude:fable-legacy', provider: 'claude', label: 'Claude Fable 5 (Legacy)',  color: '#D97706', bg: '#1C1208', cost_per_1k: 0.050, cli_flag: 'claude-fable-5',            sort_order: 1 },
+  { id: 'claude:sonnet',       provider: 'claude', label: 'Claude Sonnet',            color: '#D97706', bg: '#1C1208', cost_per_1k: 0.015, cli_flag: 'claude-sonnet-4-6',         sort_order: 2 },
+  { id: 'claude:opus',         provider: 'claude', label: 'Claude Opus 5',            color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-5',             sort_order: 3 },
+  { id: 'claude:opus-legacy',  provider: 'claude', label: 'Claude Opus 4.8 (Legacy)', color: '#D97706', bg: '#1C1208', cost_per_1k: 0.075, cli_flag: 'claude-opus-4-8',           sort_order: 4 },
+  { id: 'claude:haiku',        provider: 'claude', label: 'Claude Haiku',             color: '#D97706', bg: '#1C1208', cost_per_1k: 0.001, cli_flag: 'claude-haiku-4-5-20251001', sort_order: 5 },
   { id: 'gemini:2.5-pro',  provider: 'gemini', label: 'Gemini 2.5 Pro',  color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.00125, cli_flag: 'gemini-2.5-pro',   sort_order: 0 },
   { id: 'gemini:2.5-flash', provider: 'gemini', label: 'Gemini 2.5 Flash', color: '#3B82F6', bg: '#08111F', cost_per_1k: 0.0003, cli_flag: 'gemini-2.5-flash', sort_order: 1 },
   // The 5.6 variants are Codex product tiers rather than public API SKUs, so no

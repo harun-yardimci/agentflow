@@ -752,6 +752,23 @@ export function createTables(db: Database.Database): void {
     db.exec("UPDATE models SET enabled = 1 WHERE id = 'claude:fable'");
   }
 
+  // Migration: promote claude:fable to Fable 5.1 and shift the previous version (5)
+  // down to the fable-legacy tier, mirroring the opus rollover above. The flag swap is
+  // guarded on the outgoing value so it runs once and never clobbers a custom pick; the
+  // fable-legacy row itself comes from the seed's INSERT OR IGNORE loop. The sort_order
+  // updates open slot 1 for that row, touching only models still sitting at their seeded
+  // default, so a hand-reordered list is left alone — highest slot first, so no two rows
+  // collide mid-migration.
+  db.exec(`
+    UPDATE models
+      SET cli_flag = 'claude-fable-5-1', label = 'Claude Fable 5.1'
+      WHERE id = 'claude:fable' AND cli_flag = 'claude-fable-5';
+    UPDATE models SET sort_order = 5 WHERE id = 'claude:haiku'       AND sort_order = 4;
+    UPDATE models SET sort_order = 4 WHERE id = 'claude:opus-legacy' AND sort_order = 3;
+    UPDATE models SET sort_order = 3 WHERE id = 'claude:opus'        AND sort_order = 2;
+    UPDATE models SET sort_order = 2 WHERE id = 'claude:sonnet'      AND sort_order = 1;
+  `);
+
   // ─── Attachments table ───
   db.exec(`
     CREATE TABLE IF NOT EXISTS attachments (

@@ -68,7 +68,7 @@ function resolvePackageDir(binPath: string): string | null {
 // ─── Claude Discovery ───
 
 // Tiers that also expose their previous version as a `<tier>-legacy` model.
-const LEGACY_TIERS = new Set(['opus']);
+const LEGACY_TIERS = new Set(['fable', 'opus']);
 
 function discoverClaudeModels(): DiscoveredModel[] {
   const binPath = which('claude');
@@ -139,8 +139,8 @@ function discoverClaudeModels(): DiscoveredModel[] {
       sortOrder: baseOrder,
     });
 
-    // Expose the previous version as a "-legacy" tier (opus only for now) so it
-    // stays selectable instead of being dropped when a newer version ships.
+    // Expose the previous version as a "-legacy" tier so it stays selectable
+    // instead of being dropped when a newer version ships.
     if (LEGACY_TIERS.has(tier) && versions.length > 1) {
       results.push({
         id: `claude:${tier}-legacy`,
